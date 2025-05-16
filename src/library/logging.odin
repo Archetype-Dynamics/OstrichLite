@@ -58,8 +58,12 @@ create_log_files :: proc() -> int {
 
 //###############################|RUNTIME LOGGING|############################################
 log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
-
 	date, h, m, s := get_date_and_time()
+	defer delete(date)
+	defer delete(h)
+	defer delete(m)
+	defer delete(s)
+
 
 	runtimeEventName:= fmt.tprintf("Event Name: %s\n", eventName)
 	runtimeEventDesc:= fmt.tprintf("Event Description: %s\n", eventDesc)
@@ -109,6 +113,10 @@ log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
 //###############################|ERROR LOGGING|############################################
 log_err :: proc(message: string, location: SourceCodeLocation) -> int {
 	date, h, m, s := get_date_and_time()
+	defer delete(date)
+	defer delete(h)
+	defer delete(m)
+	defer delete(s)
 
 	errMessageString:= fmt.tprintf("Error: %s\n", message)
 	errSourceCodeFile:= fmt.tprintf("Source Code File: %s\n", location.file_path)
@@ -144,7 +152,7 @@ log_err :: proc(message: string, location: SourceCodeLocation) -> int {
 
 	_ , writeSuccess := os.write(errorFile, errLogData)
 	if writeSuccess != 0 {
-		return -1
+		return -2
 	}
 
 	defer os.close(errorFile)
