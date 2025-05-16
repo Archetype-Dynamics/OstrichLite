@@ -1,6 +1,7 @@
 package library
 
 import "core:time"
+import "base:runtime"
 
 //GENERAL TYPES START
 OstrichLiteEngine:: struct{
@@ -113,3 +114,9 @@ ServerEventType :: enum {
 	ERROR,
 	CRITICAL_ERROR
 }
+
+//For error logging
+
+//Type alias for source code location info
+SourceCodeLocation::runtime.Source_Code_Location
+#assert(SourceCodeLocation == runtime.Source_Code_Location)
