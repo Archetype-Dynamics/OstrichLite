@@ -67,6 +67,15 @@ HttpMethod :: enum {
     DELETE,
 }
 
+HttpMethodString := [HttpMethod]string{
+    .HEAD = "HEAD",
+    .GET    = "GET",
+    .POST    = "POST",
+    .PUT    = "PUT",
+    .DELETE    = "DELETE",
+
+}
+
 RouteHandler ::proc(method,path:string, headers:map[string]string, params: ..string) -> (HttpStatus, string)
 
 Route :: struct {
