@@ -107,6 +107,23 @@ handle_delete_route :: proc(method: lib.HttpMethod, path:string, headers: map[st
     "Not Found\n"
 }
 
+//Todo: Add POST request handler
+
+
+//Helper used to parse a query string into a map
+parse_query_string :: proc(query: string) -> map[string]string {
+	params := make(map[string]string)
+	pairs := strings.split(query, "&")
+	for pair in pairs {
+		keyValue := strings.split(pair, "=")
+		if len(keyValue) == 2 {
+			params[keyValue[0]] = keyValue[1]
+		}
+	}
+	return params
+}
+
+
 //Helper to split a path by the '/'
 split_path_into_segments :: proc(path: string) -> []string {
 	return strings.split(strings.trim_prefix(path, "/"), "/")
