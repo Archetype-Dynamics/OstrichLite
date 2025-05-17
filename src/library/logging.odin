@@ -28,7 +28,7 @@ create_log_files :: proc() -> int {
 	errorLocation:= get_caller_location()
 		error := new_err(
 			.CANNOT_CREATE_FILE,
-			get_err_msg(.CANNOT_CREATE_FILE),
+			ErrorMessage[.CANNOT_CREATE_FILE],
 			errorLocation
 		)
 		throw_err(error)
@@ -43,7 +43,7 @@ create_log_files :: proc() -> int {
 	    errorLocation:= get_caller_location()
 		error := new_err(
 			.CANNOT_CREATE_FILE,
-			get_err_msg(.CANNOT_CREATE_FILE),
+			ErrorMessage[.CANNOT_CREATE_FILE],
 			errorLocation
 		)
 		throw_err(error)

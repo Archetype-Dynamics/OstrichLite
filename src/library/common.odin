@@ -17,16 +17,16 @@ File Description:
 *********************************************************/
 
 // Helper proc that reads an entire file and returns the content as bytes along with a success boolean
-read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
+read_file :: proc(filepath: string, callingProcedure: SourceCodeLocation) -> ([]byte, bool) {
 	data, readSuccess := os.read_entire_file(filepath)
 	if !readSuccess {
 	errorLocation := get_caller_location()
 		error := new_err(
 			.CANNOT_READ_FILE,
-			get_err_msg(.CANNOT_READ_FILE),
+			ErrorMessage[.CANNOT_READ_FILE],
 			errorLocation
 		)
-		fmt.println("Internal Error reading file: ", filepath)
+		fmt.printfln("Internal Error reading file %s passed from calling procedure%s", filepath, callingProcedure.procedure)
 		log_err(fmt.tprintf("Internal Error reading file %s", filepath), errorLocation)
 		return nil, false
 	}
@@ -36,16 +36,17 @@ read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 
 
 // Helper proc that writes data to a file and returns a success boolean
-write_to_file :: proc(filepath: string, data: []byte, procedure: string) -> bool {
+write_to_file :: proc(filepath: string, data: []byte, callingProcedure: SourceCodeLocation) -> bool {
 	writeSuccess := os.write_entire_file(filepath, data)
 	if !writeSuccess {
 	errorLocation:= get_caller_location()
 		error := new_err(
 			.CANNOT_WRITE_TO_FILE,
-			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			ErrorMessage[.CANNOT_WRITE_TO_FILE],
 			errorLocation
 		)
 		throw_err(error)
+		fmt.printfln("Internal Error writing to file %s passed from calling procedure%s", filepath, callingProcedure.procedure)
 		log_err(fmt.tprintf("Error writing to file: %s: ", filepath), errorLocation)
 		return false
 	}
@@ -67,7 +68,7 @@ open_file :: proc(
 		errorLocation := get_caller_location()
 		error := new_err(
 			.CANNOT_OPEN_FILE,
-			get_err_msg(.CANNOT_OPEN_FILE),
+			ErrorMessage[.CANNOT_OPEN_FILE],
 			errorLocation
 		)
 		throw_err(error)

@@ -31,6 +31,7 @@ ErrorType :: enum {
 	CANNOT_CREATE_DIRECTORY,
 	//Cluster Errors
 	INVALID_CLUSTER_STRUCTURE,
+	CLUSTER_ALREADY_EXISTS,
 	CANNOT_CREATE_CLUSTER,
 	CANNOT_FIND_CLUSTER,
 	CANNOT_DELETE_CLUSTER,
@@ -83,7 +84,7 @@ Error :: struct {
 	location:  runtime.Source_Code_Location
 }
 
-ERROR_MESSAGE := [ErrorType]string {
+ErrorMessage := [ErrorType]string {
 	.NO_ERROR                          = "No Error",
 	.CANNOT_CREATE_FILE                = "Cannot Create File",
 	.CANNOT_OPEN_FILE                  = "Cannot Open File",
@@ -97,6 +98,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.CANNOT_READ_DIRECTORY             = "Cannot Read Files In Directory",
 	.CANNOT_CREATE_DIRECTORY           = "Cannot Create Directory",
 	.INVALID_CLUSTER_STRUCTURE         = "Invalid Cluster Structure Detected",
+	.CLUSTER_ALREADY_EXISTS             = "Cluster Already Exists Within Collection",
 	.CANNOT_CREATE_CLUSTER             = "Cannot Create Cluster",
 	.CANNOT_FIND_CLUSTER               = "Cannot Find Cluster",
 	.CANNOT_DELETE_CLUSTER             = "Cannot Delete Cluster",
@@ -140,10 +142,6 @@ get_caller_location :: proc(location:= #caller_location) -> SourceCodeLocation {
 
 new_err :: proc(type: ErrorType, message: string, location: SourceCodeLocation) -> Error {
 	return Error{type = type, message = message, location = location}
-}
-
-get_err_msg :: proc(type: ErrorType) -> string {
-	return strings.clone(ERROR_MESSAGE[type])
 }
 
 throw_err :: proc(err: Error) -> int {
