@@ -117,7 +117,7 @@ create_cluster_block ::proc(collectionName: string, cluster: ^lib.Cluster) -> bo
     buf:= new([32]byte)
     defer free(buf)
 
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster)
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
 
     if clusterExistsInCollection {
         fmt.printfln("ERROR: Cluster %s already exists in collection %s", collectionName, cluster.name)
