@@ -10,10 +10,11 @@ import "core:time"
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 File Description:
-            Contains helper procedures that are used throughout the OstrichDB codebase.
+            This file contains all the logic for interacting with
+            collections within the OstrichLite engine.
 *********************************************************/
 
 // Helper proc that reads an entire file and returns the content as bytes along with a success boolean
