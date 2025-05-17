@@ -11,6 +11,7 @@ import "core:os"
 //Returns 2 dynamic arrays:
 //1. ALL cluster ids in a collectionas i64
 //2. ALL cluster ids in a collection as strings
+//remember to delete the returned values in the calling procedure
 get_all_cluster_ids_in_collection :: proc(collectionName: string) -> ([dynamic]i64, [dynamic]string) {
 	using lib
 
@@ -54,6 +55,45 @@ get_all_cluster_ids_in_collection :: proc(collectionName: string) -> ([dynamic]i
 	}
 	return IDs, idsStringArray
 }
+
+//Remember to delete return value in calling procedure
+get_all_cluster_names_in_collection :: proc(collectionName: string) -> ([dynamic]string) {
+	using lib
+
+    clusterNames := make([dynamic]string)
+
+    fullPath := concat_standard_collection_name(collectionName)
+    defer delete(fullPath)
+
+    data, readSuccess := os.read_entire_file(fullPath)
+    defer delete(data)
+    if!readSuccess {
+        errorLocation := get_caller_location()
+        error := new_err(
+          .CANNOT_READ_FILE,
+            ErrorMessage[.CANNOT_READ_FILE],
+            errorLocation
+        )
+        throw_err(error)
+        log_err("Error reading collection file", errorLocation)
+        return clusterNames
+    }
+    content := string(data)
+    defer delete(content)
+
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+
+    clusterNameLine := "cluster_name :identifier:"
+    for line in lines {
+        if strings.contains(line, clusterNameLine) {
+            name := strings.trim_space(strings.split(line, ":")[2])
+            append(&clusterNames, name)
+        }
+    }
+    return clusterNames
+}
+
 
 // Reads over the passed in collection for the passed in cluster, then returns the id of that cluster
 get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bool,clusterID:i64){
@@ -687,3 +727,5 @@ get_cluster_size ::proc(collectionName: string, cluster: ^lib.Cluster) -> (bool,
     
     return success, size
 }
+
+
