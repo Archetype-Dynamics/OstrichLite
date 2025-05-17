@@ -6,20 +6,29 @@ import "core:strings"
 import "core:strconv"
 import "core:math/rand"
 import "core:os"
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
+File Description:
+            This file contains all the logic for interacting with
+            clusters within the OstrichLite engine.
+*********************************************************/
 
 //Returns 2 dynamic arrays:
 //1. ALL cluster ids in a collectionas i64
 //2. ALL cluster ids in a collection as strings
 //remember to delete the returned values in the calling procedure
-get_all_cluster_ids_in_collection :: proc(collectionName: string) -> ([dynamic]i64, [dynamic]string) {
+get_all_cluster_ids_in_collection :: proc(collection: ^lib.Collection) -> ([dynamic]i64, [dynamic]string) {
 	using lib
 
 	//the following dynamic arrays DO NOT get deleted at the end of the procedure. They are deleted in the calling procedure
 	IDs := make([dynamic]i64)
 	idsStringArray := make([dynamic]string)
 
-	fullPath := concat_standard_collection_name(collectionName)
+	fullPath := concat_standard_collection_name(collection.name)
 	defer delete(fullPath)
 
 	data, readSuccess := os.read_entire_file(fullPath)
@@ -56,13 +65,14 @@ get_all_cluster_ids_in_collection :: proc(collectionName: string) -> ([dynamic]i
 	return IDs, idsStringArray
 }
 
+//Returns a dynamic array of all cluster names within the passed in collection
 //Remember to delete return value in calling procedure
-get_all_cluster_names_in_collection :: proc(collectionName: string) -> ([dynamic]string) {
+get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dynamic]string) {
 	using lib
 
     clusterNames := make([dynamic]string)
 
-    fullPath := concat_standard_collection_name(collectionName)
+    fullPath := concat_standard_collection_name(collection.name)
     defer delete(fullPath)
 
     data, readSuccess := os.read_entire_file(fullPath)
@@ -96,14 +106,14 @@ get_all_cluster_names_in_collection :: proc(collectionName: string) -> ([dynamic
 
 
 // Reads over the passed in collection for the passed in cluster, then returns the id of that cluster
-get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bool,clusterID:i64){
+get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluster) -> (success:bool,clusterID:i64){
     using lib
 
     clusterID = -1
-    success:false
+    success=false
 
-   	if collectionName != "" {
-		collectionPath := concat_standard_collection_name(collectionName)
+   	if collection.name != "" {
+		collectionPath := concat_standard_collection_name(collection.name)
 		defer delete(collectionPath)
 
 		data, readSuccess := os.read_entire_file(collectionPath)
@@ -118,7 +128,7 @@ get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bo
 			)
 			throw_err(readError)
 			log_err("Error reading collection file", errorLocation)
-			return clusterID, success
+			return success, clusterID
 		}
 
 		content:= string(data)
@@ -126,8 +136,8 @@ get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bo
 
 		lines:= strings.split(content, "\n")
 		defer delete(lines)
-	
-		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", clusterName)
+
+		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cluster.name)
 		clusterIDLine := "cluster_id :identifier:"
 
 		for i := 0; i < len(lines); i += 1 {
@@ -135,7 +145,7 @@ get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bo
 				for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
 					if strings.contains(lines[j], clusterIDLine) {
 						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
-						clusterID, ok = strconv.parse_i64(idStr)
+						clusterID, ok := strconv.parse_i64(idStr)
 						if ok {
 							success = true
 							break
@@ -156,13 +166,13 @@ get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bo
 }
 
 //Reads over the passed in collection for the passed in cluster ID. If found return the name of the cluster
-get_clusters_name_by_id ::proc(collectionName:string, clusterID:i64) -> (success: bool, clusterName:string){
+get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (success: bool, clusterName:string){
     using lib
     clusterName = ""
     success = false
-   
-    if collectionName != "" {
-        collectionPath := concat_standard_collection_name(collectionName)
+
+    if collection.name != "" {
+        collectionPath := concat_standard_collection_name(collection.name)
         defer delete(collectionPath)
 
         data, readSuccess := read_file(collectionPath, get_caller_location())
@@ -178,7 +188,7 @@ get_clusters_name_by_id ::proc(collectionName:string, clusterID:i64) -> (success
             return success, clusterName
         }
         defer delete(data)
-        
+
         content := string(data)
         defer delete(content)
 
@@ -208,27 +218,42 @@ get_clusters_name_by_id ::proc(collectionName:string, clusterID:i64) -> (success
 }
 
 
-create_cluster_block ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
+//Creates a new lib.Cluster, assigns its members with the passed i args
+//Returns a pointer to the new lib.Cluster
+make_new_cluster :: proc(collection: ^lib.Collection, clusterName: string, id:i64) -> ^lib.Cluster {
+	using lib
+
+    cluster := new(Cluster)
+    cluster.parent = collection^
+	cluster.name = clusterName //Todo: add a check for the length of and special chars in the name
+	cluster.id = 1234567890 //numbers will be auto-incremented per collections
+    // cluster.size = 0 //Might not use the size member during creation???
+	return cluster
+}
+
+//writes the physical cluster block to the passed in collection
+//Assigns the clusters name and id with the passed in cluster.name and cluster.id
+create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool{
     using lib
 
     success:=false
     buf:= new([32]byte)
     defer free(buf)
 
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if clusterExistsInCollection {
         errorLocation:= get_caller_location()
         error:= new_err(.CLUSTER_ALREADY_EXISTS, ErrorMessage[.CLUSTER_ALREADY_EXISTS], errorLocation)
         throw_err(error)
         log_err("Error: Cluster Already Exists within collection cannot create", errorLocation)
-        fmt.printfln("ERROR: Cluster %s already exists in collection %s", collectionName, cluster.name)
+        fmt.printfln("ERROR: Cluster %s already exists in collection %s", collection.name, cluster.name)
         return success
     }
 
     clusterNameLine:[]string= {"{\n\tcluster_name :identifier: %n"}
     clusterIDLine:[]string= {"\n\tcluster_id :identifier: %i\n\t\n},\n"}
 
-    collectionPath, openSuccess := os.open(collectionName, os.O_APPEND | os.O_WRONLY, 0o666)
+    collectionPath, openSuccess := os.open(collection.name, os.O_APPEND | os.O_WRONLY, 0o666)
     if openSuccess != 0 {
         errorLocation:= get_caller_location()
         error := new_err(
@@ -291,27 +316,22 @@ create_cluster_block ::proc(collectionName: string, cluster: ^lib.Cluster) -> bo
 }
 
 //Renames a cluster to the passed in newName arg. The old name is passed in via ^cluster.name
-rename_cluster :: proc(collectionName, newName: string, cluster: ^lib.Cluster)->bool{
+rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newName: string) ->bool{
     using lib
 
     success:= false
-    collectionPath:= concat_standard_collection_name(collectionName)
+    collectionPath:= concat_standard_collection_name(collection.name)
     defer delete(collectionPath)
-
-    //Create a temp new cluster to assign the name value
-    newCluster:= new(Cluster)
-    newCluster.name = newName
-    defer free(newCluster)
 
 
     //Check if the new name is already in use by a cluster in the passed in collection
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, newCluster^)
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if clusterExistsInCollection {
         errorLocation:= get_caller_location()
         error:= new_err(.CLUSTER_ALREADY_EXISTS, ErrorMessage[.CLUSTER_ALREADY_EXISTS], errorLocation)
         throw_err(error)
         log_err("Error: Cluster Already Exists within collection cannot create", errorLocation)
-        fmt.printfln("ERROR: Cluster %s already exists in collection %s", collectionName, cluster.name)
+        fmt.printfln("ERROR: Cluster %s already exists in collection %s", collection.name, cluster.name)
         return success
     }
 
@@ -386,17 +406,16 @@ rename_cluster :: proc(collectionName, newName: string, cluster: ^lib.Cluster)->
     return success
 }
 
-
 //Finds and deletes the cluster with the passed in cluster.name
-erase_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> bool{
+erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
     using lib
 
     succces:= false
-    collectionPath:= concat_standard_collection_name(collectionName)
+    collectionPath:= concat_standard_collection_name(collection.name)
     defer delete(collectionPath)
 
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
-    if!clusterExistsInCollection{
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
+    if !clusterExistsInCollection{
         errorLocation:= get_caller_location()
         error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
         throw_err(error)
@@ -482,22 +501,22 @@ erase_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> bool{
 }
 
 //Finds and returns a the passed in cluster.name as a whole
-fetch_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> (bool, string){
+fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (bool, string){
  using lib
 
  success:= false
  clusterAsString:string = ---
 
- collectionPath:= concat_standard_collection_name(collectionName)
+ collectionPath:= concat_standard_collection_name(collection.name)
  defer delete(collectionPath)
 
- clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
+ clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
  if!clusterExistsInCollection{
     errorLocation:= get_caller_location()
     error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
     throw_err(error)
     log_err("Error: Could not find cluster within collection", errorLocation)
-    return success
+    return success, ""
  }
 
  data, readSuccess:= read_file(collectionPath, get_caller_location())
@@ -506,7 +525,7 @@ fetch_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> (bool, stri
     error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
     throw_err(error)
     log_err("Error: Could not read file", errorLocation)
-    return success
+    return success, ""
  }
 
  defer delete(data)
@@ -521,7 +540,7 @@ fetch_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> (bool, stri
         	clusterAsString = clusterBlock[clusterNameStartIndex + 1:]
             clusterAsString = strings.trim_space(clusterAsString)
             success = true
-        }        
+        }
     }else{
         continue
     }
@@ -536,14 +555,14 @@ fetch_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> (bool, stri
 }
 
 //Deletes all data within a cluster excluding the name, id all while retaining the clusters structure
-purge_cluster ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
+purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool{
     using lib
     success:= false
 
-    collectionPath:= concat_standard_collection_name(collectionName)
+    collectionPath:= concat_standard_collection_name(collection.name)
     defer delete(collectionPath)
 
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if!clusterExistsInCollection{
         errorLocation:= get_caller_location()
         error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
@@ -586,7 +605,7 @@ purge_cluster ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
 
             for line in lines {
                 trimmedLine := strings.trim_space(line)
-                if strings.contains(trimmedLine, "cluster_name :identifier:") || 
+                if strings.contains(trimmedLine, "cluster_name :identifier:") ||
                    strings.contains(trimmedLine, "cluster_id :identifier:") {
                     // Preserve indentation
                     indent := strings.index(line, trimmedLine)
@@ -597,7 +616,7 @@ purge_cluster ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
                     append(&newContent, '\n')
                 }
             }
-            append(&newContent, ..transmute([]u8)"\t\n},")
+            append(&newContent, ..transmute([]u8)fmt.tprintf("\t\n},"))
         } else if len(strings.trim_space(clusterBlock)) > 0 {
             append(&newContent, ..transmute([]u8)clusterBlock)
             append(&newContent, "},")
@@ -626,13 +645,13 @@ purge_cluster ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
 }
 
 //Read over the passed in collection and try to find the a cluster that matches the name of the passed in cluster arg
-check_if_cluster_exsists_in_collection ::proc(collectionName:string, cluster: lib.Cluster) ->bool{
+check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) ->bool{
     using lib
 
     //Note sure if I need to handle an error here
     //because this is a a helper that is called in
     //other procs that already have error handling
-    data, readSuccess:= read_file(collectionName, get_caller_location())
+    data, readSuccess:= read_file(collection.name, get_caller_location())
     defer delete(data)
 
     content:= string(data)
@@ -673,15 +692,15 @@ check_if_cluster_exsists_in_collection ::proc(collectionName:string, cluster: li
 //5. Tab characters
 //6. Newline characters
 //7. Whitespace characters
-get_cluster_size ::proc(collectionName: string, cluster: ^lib.Cluster) -> (bool, int){
+get_cluster_size ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> (bool, int){
     using lib
-    
+
     success := false
     size := 0
-    
-    collectionPath := concat_standard_collection_name(collectionName)
+
+    collectionPath := concat_standard_collection_name(collection.name)
     defer delete(collectionPath)
-    
+
     data, readSuccess := read_file(collectionPath, get_caller_location())
     if !readSuccess {
         errorLocation := get_caller_location()
@@ -691,40 +710,40 @@ get_cluster_size ::proc(collectionName: string, cluster: ^lib.Cluster) -> (bool,
         return success, size
     }
     defer delete(data)
-    
+
     content := string(data)
     clusterBlocks := strings.split(content, "},")
     defer delete(clusterBlocks)
-    
+
     for clusterBlock in clusterBlocks {
         if strings.contains(clusterBlock, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
             // Find the start of cluster content (after cluster name and id)
             lines := strings.split(clusterBlock, "\n")
             defer delete(lines)
-            
+
             contentStart := false
             for line in lines {
                 trimmed := strings.trim_space(line)
                 // Skip cluster name and id lines
-                if strings.contains(trimmed, "cluster_name :identifier:") || 
+                if strings.contains(trimmed, "cluster_name :identifier:") ||
                    strings.contains(trimmed, "cluster_id :identifier:") {
                     continue
                 }
-                
+
                 // Skip empty lines and braces
                 if trimmed == "" || trimmed == "{" {
                     continue
                 }
-                
+
                 // Count only the actual content, removing whitespace and special characters
                 size += len(strings.trim_space(line))
             }
-            
+
             success = true
             break
         }
     }
-    
+
     return success, size
 }
 

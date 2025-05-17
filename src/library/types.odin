@@ -26,18 +26,26 @@ CollectionType :: enum {
 
 Collection :: struct {
     name: string,
-    size: int //Bytes??? or fileInfo.size???
+    type: CollectionType,
+    numberOfClusters: int,
+    children: [dynamic]Cluster, //might not do this
+    // size: int //Bytes??? or fileInfo.size???
 }
 
 Cluster :: struct {
+    parent: Collection,
     name: string,
     id: i64,
-    size: int //in bytes??
+    numberOfRecords: int,
+    children: [dynamic]Record, //might not do this
+    // size: int //in bytes??
 }
 
 Record :: struct{
     name, type, value:string
+    // size:int //in bytes??
 }
+
 //DATA RELATED TYPES END
 
 
