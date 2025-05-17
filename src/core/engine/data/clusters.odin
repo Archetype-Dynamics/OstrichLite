@@ -383,10 +383,14 @@ erase_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> bool{
 check_if_cluster_exsists_in_collection ::proc(collectionName:string, cluster: lib.Cluster) ->bool{
     using lib
 
+    //Note sure if I need to handle an error here
+    //because this is a a helper that is called in
+    //other procs that already have error handling
     data, readSuccess:= read_file(collectionName, get_caller_location())
     defer delete(data)
 
     content:= string(data)
+    defer delete(content)
 
     clusterBlocks := strings.split(content, "},")
     defer delete(clusterBlocks)
