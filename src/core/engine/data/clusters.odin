@@ -280,6 +280,8 @@ rename_cluster :: proc(collectionName, newName: string, cluster: ^lib.Cluster)->
     if !writeSuccess{
         errorLocation:= get_caller_location()
         error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
+        throw_err(error)
+        log_err("Error writing cluster to collection", errorLocation)
         return writeSuccess
     }else{
         success = true
