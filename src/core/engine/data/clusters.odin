@@ -56,10 +56,11 @@ get_all_cluster_ids_in_collection :: proc(collectionName: string) -> ([dynamic]i
 }
 
 // Reads over the passed in collection for the passed in cluster, then returns the id of that cluster
-get_cluster_id_by_name ::proc(collectionName, clusterName:string) -> (clusterID:i64){
+get_clusters_id_by_name ::proc(collectionName, clusterName:string) -> (succes:bool,clusterID:i64){
     using lib
-    clusterID = 0
-    ok: bool = ---
+
+    clusterID = -1
+    success:false
 
    	if collectionName != "" {
 		collectionPath := concat_standard_collection_name(collectionName)
@@ -77,13 +78,15 @@ get_cluster_id_by_name ::proc(collectionName, clusterName:string) -> (clusterID:
 			)
 			throw_err(readError)
 			log_err("Error reading collection file", errorLocation)
-			return clusterID
+			return clusterID, success
 		}
 
 		content:= string(data)
+		defer delete(content)
+
 		lines:= strings.split(content, "\n")
 		defer delete(lines)
-
+	
 		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", clusterName)
 		clusterIDLine := "cluster_id :identifier:"
 
@@ -94,6 +97,7 @@ get_cluster_id_by_name ::proc(collectionName, clusterName:string) -> (clusterID:
 						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
 						clusterID, ok = strconv.parse_i64(idStr)
 						if ok {
+							success = true
 							break
 						} else {
 						    errorLocation:= get_caller_location()
@@ -108,10 +112,60 @@ get_cluster_id_by_name ::proc(collectionName, clusterName:string) -> (clusterID:
 		}
     }
 
-	return clusterID
+	return success, clusterID
 }
 
+//Reads over the passed in collection for the passed in cluster ID. If found return the name of the cluster
+get_clusters_name_by_id ::proc(collectionName:string, clusterID:i64) -> (success: bool, clusterName:string){
+    using lib
+    clusterName = ""
+    success = false
+   
+    if collectionName != "" {
+        collectionPath := concat_standard_collection_name(collectionName)
+        defer delete(collectionPath)
 
+        data, readSuccess := read_file(collectionPath, get_caller_location())
+        if !readSuccess {
+            errorLocation := get_caller_location()
+            error := new_err(
+                .CANNOT_READ_FILE,
+                ErrorMessage[.CANNOT_READ_FILE],
+                errorLocation
+            )
+            throw_err(error)
+            log_err("Error reading collection file", errorLocation)
+            return success, clusterName
+        }
+        defer delete(data)
+        
+        content := string(data)
+        defer delete(content)
+
+        clusterBlocks := strings.split(content, "},")
+        defer delete(clusterBlocks)
+
+        for clusterBlock in clusterBlocks {
+            if strings.contains(clusterBlock, fmt.tprintf("cluster_id :identifier: %d", clusterID)) {
+                lines := strings.split(clusterBlock, "\n")
+                defer delete(lines)
+
+                for line in lines {
+                    if strings.contains(line, "cluster_name :identifier:") {
+                        trimmedLine := strings.trim_space(line)
+                        nameStartIndex := strings.index(trimmedLine, "cluster_name :identifier:") + len("cluster_name :identifier:")
+                        clusterName = strings.trim_space(trimmedLine[nameStartIndex:])
+                        success = true
+                        break
+                    }
+                }
+                break
+            }
+        }
+    }
+
+    return success, clusterName
+}
 
 
 create_cluster_block ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
