@@ -227,6 +227,7 @@ rename_cluster :: proc(collectionName, newName: string, cluster: ^lib.Cluster)->
         error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
         throw_err(error)
         log_err("Error: Could not read file", errorLocation)
+        return success
     }
 
     defer delete(data)
@@ -290,6 +291,93 @@ rename_cluster :: proc(collectionName, newName: string, cluster: ^lib.Cluster)->
 
     return success
 }
+
+
+//Finds and deletes the cluster with the passed in cluster.name
+erase_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> bool{
+    using lib
+
+    succces:= false
+    collectionPath:= concat_standard_collection_name(collectionName)
+    defer delete(collectionPath)
+
+    data, readSuccess:= read_file(collectionPath, get_caller_location())
+    if !readSuccess{
+        errorLocation:= get_caller_location()
+        error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not read file", errorLocation)
+        return succces
+    }
+
+    defer delete(data)
+    content:= string(data)
+    defer delete(content)
+
+    metadataHeaderEnd:= strings.index(content, METADATA_END)
+    metadataHeaderEnd += len(METADATA_END) + 1
+
+    //split the collection(content) into 2 parts, the metadata header and the body
+    metadataHeader := content[:metadataHeaderEnd]
+    collectionBody:= content[metadataHeaderEnd:]
+
+    clusterBlocks:= strings.split(content, "},")
+    defer delete(clusterBlocks)
+
+    newConent := make([dynamic]u8)
+    append(&newConent, ..transmute([]u8)metadataHeader)
+    defer delete(newConent)
+
+    clusterFound:= false
+
+    for clusterBlock in clusterBlocks{
+        clusterNameStartIndex := strings.index(clusterBlock, "cluster_name :identifier:")
+        //If "cluster_name :" is not found, skip this cluster
+        if clusterNameStartIndex == - 1 {
+            //Move the start index to after "cluster_name :"
+            clusterNameStartIndex +=  len("cluster_name :identifier:")
+            //Find the end of the cluster name
+            clusterNameEndIndex:= strings.index(clusterBlock[clusterNameStartIndex:], "\n")
+
+            if clusterNameEndIndex != -1 {
+                clusterName:= strings.trim_space(clusterBlock[clusterNameStartIndex:][:clusterNameEndIndex])
+
+                //A cluster with the the oldName has been found, so lets rename it
+                if clusterName == cluster.name{
+                    clusterFound = true
+                    continue
+                }
+            }
+        }
+
+        if len(strings.trim_space(clusterBlock)) > 0 {
+            append(&newConent, ..transmute([]u8)clusterBlock)
+            append(&newConent, "},")
+        }
+    }
+
+
+    if !clusterFound{
+        errorLocation:= get_caller_location()
+        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not find cluster within collection", errorLocation)
+        return succces
+    }
+
+    writeSuccess:= write_to_file(collectionPath, newConent[:], get_caller_location())
+    if !writeSuccess{
+        errorLocation:= get_caller_location()
+        error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE],errorLocation)
+        throw_err(error)
+        log_err("Error: Could not write cluster to collection", errorLocation)
+    }else{
+        succces =  true
+    }
+
+    return succces
+}
+
 
 //Read over the passed in collection and try to find the a cluster that matches the name of the passed in cluster arg
 check_if_cluster_exsists_in_collection ::proc(collectionName:string, cluster: lib.Cluster) ->bool{
