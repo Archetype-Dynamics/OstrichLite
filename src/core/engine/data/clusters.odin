@@ -301,6 +301,15 @@ erase_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> bool{
     collectionPath:= concat_standard_collection_name(collectionName)
     defer delete(collectionPath)
 
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
+    if!clusterExistsInCollection{
+        errorLocation:= get_caller_location()
+        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not find cluster within collection", errorLocation)
+        return succces
+    }
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     if !readSuccess{
         errorLocation:= get_caller_location()
@@ -378,6 +387,149 @@ erase_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> bool{
     return succces
 }
 
+//Finds and returns a the passed in cluster.name as a whole
+fetch_cluster ::proc(collectionName:string, cluster: ^lib.Cluster)-> (bool, string){
+ using lib
+
+ success:= false
+ clusterAsString:string = ---
+
+ collectionPath:= concat_standard_collection_name(collectionName)
+ defer delete(collectionPath)
+
+ clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
+ if!clusterExistsInCollection{
+    errorLocation:= get_caller_location()
+    error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
+    throw_err(error)
+    log_err("Error: Could not find cluster within collection", errorLocation)
+    return success
+ }
+
+ data, readSuccess:= read_file(collectionPath, get_caller_location())
+ if!readSuccess{
+    errorLocation:= get_caller_location()
+    error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
+    throw_err(error)
+    log_err("Error: Could not read file", errorLocation)
+    return success
+ }
+
+ defer delete(data)
+ content:= string(data)
+ defer delete(content)
+ clusterBlocks:= strings.split(content, "},")
+
+ for clusterBlock in clusterBlocks{
+ 	if strings.contains(clusterBlock, fmt.tprintf("cluster_name :identifier: %s", cluster.name)){
+        clusterNameStartIndex := strings.index(clusterBlock, "{")
+        if clusterNameStartIndex != -1 {
+        	clusterAsString = clusterBlock[clusterNameStartIndex + 1:]
+            clusterAsString = strings.trim_space(clusterAsString)
+            success = true
+        }        
+    }else{
+        continue
+    }
+    errorLocation:= get_caller_location()
+    error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
+    throw_err(error)
+    log_err("Error: Could not find cluster within collection", errorLocation)
+    break
+ }
+
+ return success, strings.clone(clusterAsString)
+}
+
+//Deletes all data within a cluster excluding the name, id all while retaining the clusters structure
+purge_cluster ::proc(collectionName: string, cluster: ^lib.Cluster) -> bool{
+    using lib
+    success:= false
+
+    collectionPath:= concat_standard_collection_name(collectionName)
+    defer delete(collectionPath)
+
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collectionName, cluster^)
+    if!clusterExistsInCollection{
+        errorLocation:= get_caller_location()
+        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not find cluster within collection", errorLocation)
+        return success
+    }
+
+    data, readSuccess:= read_file(collectionPath, get_caller_location())
+    if!readSuccess{
+        errorLocation:= get_caller_location()
+        error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not read file", errorLocation)
+        return success
+    }
+    defer delete(data)
+    content:= string(data)
+    defer delete(content)
+
+    clusterBlocks := strings.split(content, "},")
+    defer delete(clusterBlocks)
+
+    newContent := make([dynamic]u8)
+    defer delete(newContent)
+
+    metadataHeaderEnd := strings.index(content, METADATA_END)
+    metadataHeaderEnd += len(METADATA_END) + 1
+    append(&newContent, ..transmute([]u8)content[:metadataHeaderEnd])
+
+    clusterFound := false
+    for clusterBlock in clusterBlocks {
+        if strings.contains(clusterBlock, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
+            clusterFound = true
+            lines := strings.split(clusterBlock, "\n")
+            defer delete(lines)
+
+            append(&newContent, '{')
+            append(&newContent, '\n')
+
+            for line in lines {
+                trimmedLine := strings.trim_space(line)
+                if strings.contains(trimmedLine, "cluster_name :identifier:") || 
+                   strings.contains(trimmedLine, "cluster_id :identifier:") {
+                    // Preserve indentation
+                    indent := strings.index(line, trimmedLine)
+                    if indent > 0 {
+                        append(&newContent, ..transmute([]u8)strings.repeat(" ", indent))
+                    }
+                    append(&newContent, ..transmute([]u8)trimmedLine)
+                    append(&newContent, '\n')
+                }
+            }
+            append(&newContent, ..transmute([]u8)"\t\n},")
+        } else if len(strings.trim_space(clusterBlock)) > 0 {
+            append(&newContent, ..transmute([]u8)clusterBlock)
+            append(&newContent, "},")
+        }
+    }
+
+    if !clusterFound {
+        errorLocation := get_caller_location()
+        error := new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not find cluster within collection", errorLocation)
+        return success
+    }
+
+    writeSuccess := write_to_file(collectionPath, newContent[:], get_caller_location())
+    if !writeSuccess {
+        errorLocation := get_caller_location()
+        error := new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
+        throw_err(error)
+        log_err("Error: Could not write to file", errorLocation)
+        return success
+    }
+
+    success = true
+    return success
+}
 
 //Read over the passed in collection and try to find the a cluster that matches the name of the passed in cluster arg
 check_if_cluster_exsists_in_collection ::proc(collectionName:string, cluster: lib.Cluster) ->bool{
@@ -416,4 +568,68 @@ check_if_cluster_exsists_in_collection ::proc(collectionName:string, cluster: li
         }
     }
     return false
+}
+
+
+//Returns the size of the passed in cluster in bytes, this EXCLUDES the following:
+//1. The opening curly brace
+//2. The closing curly brace and it trailing comma
+//3. The cluster name
+//4. The cluster id
+//5. Tab characters
+//6. Newline characters
+//7. Whitespace characters
+get_cluster_size ::proc(collectionName: string, cluster: ^lib.Cluster) -> (bool, int){
+    using lib
+    
+    success := false
+    size := 0
+    
+    collectionPath := concat_standard_collection_name(collectionName)
+    defer delete(collectionPath)
+    
+    data, readSuccess := read_file(collectionPath, get_caller_location())
+    if !readSuccess {
+        errorLocation := get_caller_location()
+        error := new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
+        throw_err(error)
+        log_err("Error reading collection file", errorLocation)
+        return success, size
+    }
+    defer delete(data)
+    
+    content := string(data)
+    clusterBlocks := strings.split(content, "},")
+    defer delete(clusterBlocks)
+    
+    for clusterBlock in clusterBlocks {
+        if strings.contains(clusterBlock, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
+            // Find the start of cluster content (after cluster name and id)
+            lines := strings.split(clusterBlock, "\n")
+            defer delete(lines)
+            
+            contentStart := false
+            for line in lines {
+                trimmed := strings.trim_space(line)
+                // Skip cluster name and id lines
+                if strings.contains(trimmed, "cluster_name :identifier:") || 
+                   strings.contains(trimmed, "cluster_id :identifier:") {
+                    continue
+                }
+                
+                // Skip empty lines and braces
+                if trimmed == "" || trimmed == "{" {
+                    continue
+                }
+                
+                // Count only the actual content, removing whitespace and special characters
+                size += len(strings.trim_space(line))
+            }
+            
+            success = true
+            break
+        }
+    }
+    
+    return success, size
 }
