@@ -1,0 +1,6 @@
+*.bin
+*.so
+*.exe
+*.json
+*.csv
+*/bin
