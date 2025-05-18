@@ -15,22 +15,6 @@ File Description:
             collections within the OstrichLite engine.
 *********************************************************/
 
-//Reads over all standard collections, appends their names and returns them
-//Dont forget to free the memery in the calling procedure
-get_all_collection_names :: proc() -> [dynamic]string{
-    using lib
-
-    collectionArray:= make([dynamic]string, 0)
-    standardCollectionDir, openDirError :=os.open(STANDARD_COLLECTION_PATH)
-
-    collections, readDirError:= os.read_dir(standardCollectionDir, 1)
-    for collection in collections{
-        append(&collectionArray, collection.name)
-    }
-
-    return collectionArray
-}
-
 //creates a new lib.Collection
 make_new_collection :: proc(name:string, type:lib.CollectionType) -> ^lib.Collection{
     using lib
@@ -56,14 +40,15 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
 
     collectionPath:= concat_standard_collection_name(collection.name)
 
-    file, creationSuccess:= open_file(collectionPath, os.O_CREATE, 0o666)
+    file, creationSuccess:= os.open(collectionPath, os.O_CREATE, 0o666)
 	defer os.close(file)
     //Todo: need to append metadata header here
     // metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
 	// metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write",MetadataField.PERMISSION, colType)
 
-	if !creationSuccess {
+	if creationSuccess != nil{
 		make_new_err(.CANNOT_CREATE_COLLECTION, get_caller_location())
+		return success
 	}else{
 	    success = true
 	}
@@ -179,6 +164,22 @@ purge_collection :: proc(collection: ^lib.Collection) -> bool {
 	}else{success = true}
 
 	return success
+}
+
+//Reads over all standard collections, appends their names and returns them
+//Dont forget to free the memery in the calling procedure
+get_all_collection_names :: proc() -> [dynamic]string{
+    using lib
+
+    collectionArray:= make([dynamic]string, 0)
+    standardCollectionDir, openDirError :=os.open(STANDARD_COLLECTION_PATH)
+
+    collections, readDirError:= os.read_dir(standardCollectionDir, 1)
+    for collection in collections{
+        append(&collectionArray, collection.name)
+    }
+
+    return collectionArray
 }
 
 //See if the passed in collection exists in the path
