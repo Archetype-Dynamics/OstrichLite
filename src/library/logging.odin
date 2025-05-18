@@ -26,14 +26,7 @@ main :: proc() {
 create_log_files :: proc() -> int {
 	runtimeFile, runtimeLogOpenError := os.open(RUNTIME_LOG_PATH, os.O_CREATE, 0o666)
 	if runtimeLogOpenError != 0 {
-	errorLocation:= get_caller_location()
-		error := new_err(
-			.CANNOT_CREATE_FILE,
-			ErrorMessage[.CANNOT_CREATE_FILE],
-			errorLocation
-		)
-		throw_err(error)
-		log_err("Error creating OstrichLite runtime log file", errorLocation)
+		make_new_err(.CANNOT_CREATE_FILE, get_caller_location())
 		return -1
 	}
 
@@ -41,14 +34,7 @@ create_log_files :: proc() -> int {
 
 	errorFile, errorLogOpenError := os.open(ERROR_LOG_PATH, os.O_CREATE, 0o666)
 	if errorLogOpenError != 0 {
-	    errorLocation:= get_caller_location()
-		error := new_err(
-			.CANNOT_CREATE_FILE,
-			ErrorMessage[.CANNOT_CREATE_FILE],
-			errorLocation
-		)
-		throw_err(error)
-		log_err("Error creating OstrichLite error log file", errorLocation)
+		make_new_err(.CANNOT_CREATE_FILE, get_caller_location())
 		return -1
 
 	}

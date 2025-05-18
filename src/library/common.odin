@@ -17,65 +17,16 @@ File Description:
             collections within the OstrichLite engine.
 *********************************************************/
 
-// Helper proc that reads an entire file and returns the content as bytes along with a success boolean
+// Helper proc that reads an entire file and returns the content as bytes, if the fail thats fine, errors are handled in the caller proc
 read_file :: proc(filepath: string, callingProcedure: SourceCodeLocation) -> ([]byte, bool) {
-	data, readSuccess := os.read_entire_file(filepath)
-	if !readSuccess {
-	errorLocation := get_caller_location()
-		error := new_err(
-			.CANNOT_READ_FILE,
-			ErrorMessage[.CANNOT_READ_FILE],
-			errorLocation
-		)
-		fmt.printfln("Internal Error reading file %s passed from calling procedure%s", filepath, callingProcedure.procedure)
-		log_err(fmt.tprintf("Internal Error reading file %s", filepath), errorLocation)
-		return nil, false
-	}
-	return data, true
+	return os.read_entire_file(filepath)
 }
 
 
 
-// Helper proc that writes data to a file and returns a success boolean
+// Helper proc that writes data to a file and returns a success boolean, if the fail thats fine, errors are handled in the caller proc
 write_to_file :: proc(filepath: string, data: []byte, callingProcedure: SourceCodeLocation) -> bool {
-	writeSuccess := os.write_entire_file(filepath, data)
-	if !writeSuccess {
-	errorLocation:= get_caller_location()
-		error := new_err(
-			.CANNOT_WRITE_TO_FILE,
-			ErrorMessage[.CANNOT_WRITE_TO_FILE],
-			errorLocation
-		)
-		throw_err(error)
-		fmt.printfln("Internal Error writing to file %s passed from calling procedure%s", filepath, callingProcedure.procedure)
-		log_err(fmt.tprintf("Error writing to file: %s: ", filepath), errorLocation)
-		return false
-	}
-	return true
-}
-
-// Helper proc that opens a file with specified flags and returns file handle and success boolean
-open_file :: proc(
-	filepath: string,
-	flags: int,
-	mode: int,
-) -> (
-	os.Handle,
-	bool,
-) {
-	handle, openSuccess := os.open(filepath, flags, mode)
-	if openSuccess != 0 {
-		errorLocation := get_caller_location()
-		error := new_err(
-			.CANNOT_OPEN_FILE,
-			ErrorMessage[.CANNOT_OPEN_FILE],
-			errorLocation
-		)
-		throw_err(error)
-		log_err(fmt.tprintf("Error opening file: ", filepath), errorLocation)
-		return 0, false
-	}
-	return handle, true
+	return os.write_entire_file(filepath, data)
 }
 
 

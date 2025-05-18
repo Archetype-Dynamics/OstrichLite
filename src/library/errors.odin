@@ -43,6 +43,7 @@ ErrorType :: enum {
 	CANNOT_READ_CLUSTER,
 	CANNOT_UPDATE_CLUSTER,
 	CANNOT_APPEND_CLUSTER, //to a file
+	CLUSTER_DOES_NOT_EXISTS,
 	//Record Errors
 	INVALID_RECORD_DATA,
 	CANNOT_CREATE_RECORD,
@@ -112,6 +113,7 @@ ErrorMessage := [ErrorType]string {
 	.CANNOT_READ_CLUSTER               = "Cannot Read Cluster",
 	.CANNOT_UPDATE_CLUSTER             = "Cannot Update Cluster",
 	.CANNOT_APPEND_CLUSTER             = "Cannot Append Cluster",
+	.CLUSTER_DOES_NOT_EXISTS             = "Specified Cluster Does Not Exists, Therefore No Work Can Be Done",
 	.INVALID_RECORD_DATA               = "Invalid Record Data",
 	.CANNOT_CREATE_RECORD              = "Cannot Create Record",
 	.CANNOT_FIND_RECORD                = "Cannot Find Record",
@@ -151,7 +153,7 @@ new_err :: proc(type: ErrorType, message: string, location: SourceCodeLocation) 
 	return Error{type = type, message = message, location = location}
 }
 
-throw_err :: proc(err: Error) -> int {
+throw_err :: proc(err: ^Error) -> int {
 		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
 		fmt.printfln(
 			"ERROR%s occured in...\nFile: [%s%s%s]\nOstrichDB Procedure: [%s%s%s] @ Line: [%s%d%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
@@ -193,4 +195,22 @@ throw_custom_err :: proc(err: Error, custom_message: string) -> int {
 			RESET,
 		)
 		return 1
+}
+
+
+
+//Hanles all error related shit, just pass it the two args and you are good. - Marshall
+make_new_err :: proc(type:ErrorType, location:SourceCodeLocation){
+    message:= ErrorMessage[type]
+
+    error:= new(Error)
+    error.type = type
+    error.message = message
+    error.location = location
+
+    throw_err(error)
+    log_err(fmt.tprintf("%s", error.message), location)
+
+
+    free(error)
 }

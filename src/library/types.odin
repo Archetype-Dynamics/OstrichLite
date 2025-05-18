@@ -37,7 +37,7 @@ Collection :: struct {
     name: string,
     type: CollectionType,
     numberOfClusters: int,
-    children: [dynamic]Cluster, //might not do this
+    clusters: [dynamic]Cluster, //might not do this
     // size: int //Bytes??? or fileInfo.size???
 }
 
@@ -46,11 +46,14 @@ Cluster :: struct {
     name: string,
     id: i64,
     numberOfRecords: int,
-    children: [dynamic]Record, //might not do this
+    records: [dynamic]Record, //might not do this
     // size: int //in bytes??
 }
 
 Record :: struct{
+    grandparent: Collection,
+    parent: Cluster,
+    id: i64,
     name, type, value:string
     // size:int //in bytes??
 }
