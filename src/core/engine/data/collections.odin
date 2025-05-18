@@ -39,7 +39,7 @@ make_new_collection :: proc(name:string, type:lib.CollectionType) -> ^lib.Collec
     collection.name = name
     collection.type = type
     collection.numberOfClusters = 0
-    collection.children = make([dynamic]Cluster)
+    collection.clusters = make([dynamic]Cluster, 0)
 
     return collection
 }
@@ -63,10 +63,7 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
 	// metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write",MetadataField.PERMISSION, colType)
 
 	if !creationSuccess {
-	    errorLocation := get_caller_location()
-		error := new_err(.CANNOT_CREATE_COLLECTION, ErrorMessage[.CANNOT_CREATE_COLLECTION], errorLocation)
-		throw_err(error)
-		log_err("Error: Could not create new collection", errorLocation)
+		make_new_err(.CANNOT_CREATE_COLLECTION, get_caller_location())
 	}else{
 	    success = true
 	}
@@ -115,10 +112,7 @@ fetch_collection :: proc(collection: ^lib.Collection) -> (bool,string) {
 	defer delete(data)
 
 	if !readSuccess {
-	errorLocation:= get_caller_location()
-		error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-		throw_err(error)
-		log_err("Error: Error  reading collection file", errorLocation)
+		make_new_err(.CANNOT_READ_FILE, get_caller_location())
 		return success, ""
 	}
 
@@ -156,10 +150,7 @@ purge_collection :: proc(collection: ^lib.Collection) -> bool {
 	defer delete(data)
 
 	if !readSuccess {
-	    errorLocation:= get_caller_location()
-	    error:=new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-		throw_err(error)
-		log_err("Error reading collection file", errorLocation)
+		make_new_err(.CANNOT_READ_FILE, get_caller_location())
 		return success
 	}
 

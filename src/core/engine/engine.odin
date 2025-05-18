@@ -15,8 +15,10 @@ File Description:
 start_engine ::proc() -> int {
     using lib
 
-    ostrichLiteEngine := new(OstrichLiteEngine)
-    ostrichLiteEngine.server.port = 8042
+    for {
+        ostrichLiteEngine := new(OstrichLiteEngine)
+        ostrichLiteEngine.server.port = 8042
+    }
 
     free(ostrichLiteEngine)
     return 0

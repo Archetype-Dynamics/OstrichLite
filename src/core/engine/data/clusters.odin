@@ -33,14 +33,7 @@ get_all_cluster_ids_in_collection :: proc(collection: ^lib.Collection) -> ([dyna
 
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
-	errorLocation := get_caller_location()
-		error := new_err(
-			.CANNOT_READ_FILE,
-			ErrorMessage[.CANNOT_READ_FILE],
-			errorLocation
-		)
-		throw_err(error)
-		log_err("Error reading collection file", errorLocation)
+		make_new_err(.CANNOT_READ_FILE, get_caller_location())
 		return IDs, idsStringArray
 	}
 
@@ -78,14 +71,7 @@ get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dy
     data, readSuccess := os.read_entire_file(fullPath)
     defer delete(data)
     if!readSuccess {
-        errorLocation := get_caller_location()
-        error := new_err(
-          .CANNOT_READ_FILE,
-            ErrorMessage[.CANNOT_READ_FILE],
-            errorLocation
-        )
-        throw_err(error)
-        log_err("Error reading collection file", errorLocation)
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
         return clusterNames
     }
     content := string(data)
@@ -120,14 +106,7 @@ get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluste
 		defer delete(data)
 
 		if !readSuccess {
-		errorLocation:= get_caller_location()
-			readError := new_err(
-				.CANNOT_READ_FILE,
-				ErrorMessage[.CANNOT_READ_FILE],
-				errorLocation
-			)
-			throw_err(readError)
-			log_err("Error reading collection file", errorLocation)
+			make_new_err(.CANNOT_READ_FILE, get_caller_location())
 			return success, clusterID
 		}
 
@@ -150,10 +129,7 @@ get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluste
 							success = true
 							break
 						} else {
-						    errorLocation:= get_caller_location()
-						    error:= new_err(.CANNOT_FIND_CLUSTER,ErrorMessage[.CANNOT_FIND_CLUSTER],errorLocation)
-						    fmt.println("ERROR: Error parsing cluster ID")
-							log_err("Error parsing cluster ID", errorLocation)
+							make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
 							break
 						}
 					}
@@ -176,18 +152,12 @@ get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (s
         defer delete(collectionPath)
 
         data, readSuccess := read_file(collectionPath, get_caller_location())
+        defer delete(data)
+
         if !readSuccess {
-            errorLocation := get_caller_location()
-            error := new_err(
-                .CANNOT_READ_FILE,
-                ErrorMessage[.CANNOT_READ_FILE],
-                errorLocation
-            )
-            throw_err(error)
-            log_err("Error reading collection file", errorLocation)
+            make_new_err(.CANNOT_READ_FILE, get_caller_location())
             return success, clusterName
         }
-        defer delete(data)
 
         content := string(data)
         defer delete(content)
@@ -226,7 +196,9 @@ make_new_cluster :: proc(collection: ^lib.Collection, clusterName: string, id:i6
     cluster := new(Cluster)
     cluster.parent = collection^
 	cluster.name = clusterName //Todo: add a check for the length of and special chars in the name
-	cluster.id = 1234567890 //numbers will be auto-incremented per collections
+	cluster.id = 0 //numbers will be auto-incremented per collections
+	cluster.numberOfRecords = 0
+	cluster.records= make([dynamic]Record, 0)
     // cluster.size = 0 //Might not use the size member during creation???
 	return cluster
 }
@@ -242,11 +214,7 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
 
     clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if clusterExistsInCollection {
-        errorLocation:= get_caller_location()
-        error:= new_err(.CLUSTER_ALREADY_EXISTS, ErrorMessage[.CLUSTER_ALREADY_EXISTS], errorLocation)
-        throw_err(error)
-        log_err("Error: Cluster Already Exists within collection cannot create", errorLocation)
-        fmt.printfln("ERROR: Cluster %s already exists in collection %s", collection.name, cluster.name)
+        make_new_err(.CLUSTER_ALREADY_EXISTS, get_caller_location())
         return success
     }
 
@@ -255,14 +223,7 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
 
     collectionPath, openSuccess := os.open(collection.name, os.O_APPEND | os.O_WRONLY, 0o666)
     if openSuccess != 0 {
-        errorLocation:= get_caller_location()
-        error := new_err(
-            .CANNOT_OPEN_FILE,
-            ErrorMessage[.CANNOT_OPEN_FILE],
-            errorLocation
-        )
-        throw_err(error)
-        log_err("Error opening collection file", errorLocation)
+        make_new_err(.CANNOT_OPEN_FILE, get_caller_location())
         return success
     }
     //Find the cluster name placeholder and write the new the clusterName in its place
@@ -270,18 +231,13 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
         if strings.contains(clusterNameLine[i], "%n"){
             newClusterName, replaceSuccess := strings.replace(clusterNameLine[i], "%n", cluster.name, -1)
             if !replaceSuccess{
-                errorLocation:= get_caller_location()
-                error:= new_err(.CANNOT_UPDATE_CLUSTER, ErrorMessage[.CANNOT_UPDATE_CLUSTER], errorLocation)
-                throw_err(error)
-                log_err("Error updating cluster name value", errorLocation)
+                make_new_err(.CANNOT_UPDATE_CLUSTER, get_caller_location())
+                return success
             }
 
             writeClusterName, writeSuccess:= os.write(collectionPath, transmute([]u8)newClusterName)
             if writeSuccess != 0{
-                errorLocation:= get_caller_location()
-                error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
-                throw_err(error)
-                log_err("Error placing cluster name into cluster block", errorLocation)
+                make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
                 return success
             }
         }
@@ -292,19 +248,13 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
         if strings.contains(clusterIDLine[i], "%i"){
             newClusterID, replaceSuccess:= strings.replace(clusterIDLine[i], "%i", strconv.append_int(buf[:], cluster.id, 10), -1)
             if !replaceSuccess{
-                errorLocation:= get_caller_location()
-                error:= new_err(.CANNOT_UPDATE_CLUSTER, ErrorMessage[.CANNOT_UPDATE_CLUSTER], errorLocation)
-                throw_err(error)
-                log_err("Error updating cluster name value", errorLocation)
+                make_new_err(.CANNOT_UPDATE_CLUSTER, get_caller_location())
                 return success
             }
 
             writeClusterID, writeSuccess:= os.write(collectionPath, transmute([]u8)newClusterID)
             if writeSuccess != 0{
-                errorLocation := get_caller_location()
-                error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
-                throw_err(error)
-                log_err("Error writing cluster id into cluster block", errorLocation)
+                make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
                 return success
             }
         }
@@ -327,20 +277,13 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
     //Check if the new name is already in use by a cluster in the passed in collection
     clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if clusterExistsInCollection {
-        errorLocation:= get_caller_location()
-        error:= new_err(.CLUSTER_ALREADY_EXISTS, ErrorMessage[.CLUSTER_ALREADY_EXISTS], errorLocation)
-        throw_err(error)
-        log_err("Error: Cluster Already Exists within collection cannot create", errorLocation)
-        fmt.printfln("ERROR: Cluster %s already exists in collection %s", collection.name, cluster.name)
+        make_new_err(.CLUSTER_ALREADY_EXISTS, get_caller_location())
         return success
     }
 
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     if !readSuccess{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not read file", errorLocation)
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
         return success
     }
 
@@ -384,19 +327,13 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
     }
 
     if !clusterFound{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-        throw_err(error)
-        log_err("Error finding cluster in collection", errorLocation)
+        make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
         return clusterFound
     }
 
     writeSuccess:= write_to_file(collectionPath, newConent[:], get_caller_location())
     if !writeSuccess{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
-        throw_err(error)
-        log_err("Error writing cluster to collection", errorLocation)
+        make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
         return writeSuccess
     }else{
         success = true
@@ -416,19 +353,13 @@ erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
 
     clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if !clusterExistsInCollection{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not find cluster within collection", errorLocation)
+        make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
         return succces
     }
 
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     if !readSuccess{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not read file", errorLocation)
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
         return succces
     }
 
@@ -480,19 +411,13 @@ erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
 
 
     if !clusterFound{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not find cluster within collection", errorLocation)
+        make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
         return succces
     }
 
     writeSuccess:= write_to_file(collectionPath, newConent[:], get_caller_location())
     if !writeSuccess{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE],errorLocation)
-        throw_err(error)
-        log_err("Error: Could not write cluster to collection", errorLocation)
+        make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
     }else{
         succces =  true
     }
@@ -512,19 +437,13 @@ fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (bool
 
  clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
  if!clusterExistsInCollection{
-    errorLocation:= get_caller_location()
-    error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-    throw_err(error)
-    log_err("Error: Could not find cluster within collection", errorLocation)
+    make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
     return success, ""
  }
 
  data, readSuccess:= read_file(collectionPath, get_caller_location())
  if!readSuccess{
-    errorLocation:= get_caller_location()
-    error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-    throw_err(error)
-    log_err("Error: Could not read file", errorLocation)
+    make_new_err(.CANNOT_READ_FILE, get_caller_location())
     return success, ""
  }
 
@@ -544,10 +463,7 @@ fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (bool
     }else{
         continue
     }
-    errorLocation:= get_caller_location()
-    error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-    throw_err(error)
-    log_err("Error: Could not find cluster within collection", errorLocation)
+    make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
     break
  }
 
@@ -564,19 +480,13 @@ purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool
 
     clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if!clusterExistsInCollection{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not find cluster within collection", errorLocation)
+        make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
         return success
     }
 
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     if!readSuccess{
-        errorLocation:= get_caller_location()
-        error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not read file", errorLocation)
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
         return success
     }
     defer delete(data)
@@ -624,19 +534,13 @@ purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool
     }
 
     if !clusterFound {
-        errorLocation := get_caller_location()
-        error := new_err(.CANNOT_FIND_CLUSTER, ErrorMessage[.CANNOT_FIND_CLUSTER], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not find cluster within collection", errorLocation)
+        make_new_err(.CLUSTER_DOES_NOT_EXISTS, get_caller_location())
         return success
     }
 
     writeSuccess := write_to_file(collectionPath, newContent[:], get_caller_location())
     if !writeSuccess {
-        errorLocation := get_caller_location()
-        error := new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
-        throw_err(error)
-        log_err("Error: Could not write to file", errorLocation)
+        make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
         return success
     }
 
@@ -648,10 +552,14 @@ purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool
 check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) ->bool{
     using lib
 
-    //Note sure if I need to handle an error here
-    //because this is a a helper that is called in
-    //other procs that already have error handling
+    success:= false
+
     data, readSuccess:= read_file(collection.name, get_caller_location())
+    if !readSuccess{
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+        return success
+    }
+
     defer delete(data)
 
     content:= string(data)
@@ -677,10 +585,11 @@ check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, clust
         clusterName:= strings.trim_space(clusterBlock[clusterNameStartIndex:][:clusterNameEndIndex])
         //Compare the extracted cluster name with the provided cluster name
         if strings.compare(clusterName, cluster.name) == 0 {
-            return true
+            success = true
+            break
         }
     }
-    return false
+    return success
 }
 
 
@@ -703,10 +612,7 @@ get_cluster_size ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> (
 
     data, readSuccess := read_file(collectionPath, get_caller_location())
     if !readSuccess {
-        errorLocation := get_caller_location()
-        error := new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
-        throw_err(error)
-        log_err("Error reading collection file", errorLocation)
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
         return success, size
     }
     defer delete(data)
