@@ -3,8 +3,6 @@ package data
 import lib "../../../library"
 import "core:fmt"
 import "core:strings"
-import "core:strconv"
-import "core:math/rand"
 import "core:os"
 /********************************************************
 Author: Marshall A Burns
