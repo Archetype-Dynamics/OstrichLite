@@ -127,3 +127,6 @@ VERBOSE_HELP_FILE :: "../src/core/help/docs/verbose/verbose.md"
 SIMPLE_HELP_FILE :: "../src/core/help/docs/simple/simple.md"
 GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
 CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
+
+
+MAX_COLLECTION_NAME_LENGTH :: 64

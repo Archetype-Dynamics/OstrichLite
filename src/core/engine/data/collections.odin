@@ -31,6 +31,7 @@ get_all_collection_names :: proc() -> [dynamic]string{
     return collectionArray
 }
 
+//creates a new lib.Collection
 make_new_collection :: proc(name:string, type:lib.CollectionType) -> ^lib.Collection{
     using lib
 
@@ -48,10 +49,10 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
     using lib
     success:= false
 
-    //Check if a collection of the passed in name
-   // if  !check_if_collection_exists(){
-   //     return success
-   // }
+    // Check if a collection of the passed in name
+   if  !check_if_collection_exists(collection){
+       return success
+   }
 
     collectionPath:= concat_standard_collection_name(collection.name)
 
@@ -81,6 +82,11 @@ rename_collection :: proc(collection: ^lib.Collection, newName:string) -> bool {
     using lib
     success := false
 
+    // Check if a collection of the passed in name
+   if  !check_if_collection_exists(collection){
+       return success
+   }
+
 	collectionPath := concat_standard_collection_name(collection.name)
 	renameSuccess := os.rename(collectionPath, newName)
 	if renameSuccess{
@@ -91,11 +97,17 @@ rename_collection :: proc(collection: ^lib.Collection, newName:string) -> bool {
 }
 
 //reads and returns the body of the passed in collection
-fetch_collection :: proc(collection: ^lib.Collection) -> string {
+fetch_collection :: proc(collection: ^lib.Collection) -> (bool,string) {
     using lib
 
+    success:= false
 	fileStart := -1
 	startingPoint := "BTM@@@@@@@@@@@@@@@"
+
+    // Check if a collection of the passed in name
+   if  !check_if_collection_exists(collection){
+       return success, ""
+   }
 
 	collectionPath := concat_standard_collection_name(collection.name)
 
@@ -107,7 +119,7 @@ fetch_collection :: proc(collection: ^lib.Collection) -> string {
 		error:= new_err(.CANNOT_READ_FILE, ErrorMessage[.CANNOT_READ_FILE], errorLocation)
 		throw_err(error)
 		log_err("Error: Error  reading collection file", errorLocation)
-		return ""
+		return success, ""
 	}
 
 	content := string(data)
@@ -125,13 +137,12 @@ fetch_collection :: proc(collection: ^lib.Collection) -> string {
 
 	if fileStart == -1 || fileStart >= len(lines) {
 	    //No data found
-		return ""
+		return success, ""
 	}
 
 	collectionContent := strings.join(lines[fileStart:], "\n")
-	return strings.clone(collectionContent)
+	return true, strings.clone(collectionContent)
 }
-
 
 //deletes all data from a collection while retaining the metadat header
 purge_collection :: proc(collection: ^lib.Collection) -> bool {
@@ -179,8 +190,6 @@ purge_collection :: proc(collection: ^lib.Collection) -> bool {
 	return success
 }
 
-
-
 //See if the passed in collection exists in the path
 check_if_collection_exists :: proc(collection: ^lib.Collection) -> bool {
     using lib
@@ -214,4 +223,31 @@ get_collection_count :: proc() -> int {
 	}
 
 	return collectionCount
+}
+
+//Checks if the passed in collection.name is valid
+validate_collection_name :: proc(collection: ^lib.Collection) -> bool {
+	using lib
+
+	//CHECK#1: check collection name length
+	nameAsBytes := transmute([]byte)collection.name
+	if len(nameAsBytes) > MAX_COLLECTION_NAME_LENGTH {
+		return false
+	}
+
+	//CHECK#2: check if the file already exists
+	collectionExists :=check_if_collection_exists(collection)
+	if collectionExists {
+	    return false
+	}
+
+	//CHECK#3: check if the name has special chars
+	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+="
+	for c := 0; c < len(collection.name); c += 1 {
+		if strings.contains_any(collection.name, invalidChars) {
+			return false
+		}
+	}
+
+	return true
 }
