@@ -59,7 +59,6 @@ open_file :: proc(
 	filepath: string,
 	flags: int,
 	mode: int,
-	procedure: string,
 ) -> (
 	os.Handle,
 	bool,

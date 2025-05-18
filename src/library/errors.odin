@@ -30,6 +30,10 @@ ErrorType :: enum {
 	CANNOT_OPEN_DIRECTORY,
 	CANNOT_READ_DIRECTORY,
 	CANNOT_CREATE_DIRECTORY,
+	//Collection errors
+	CANNOT_CREATE_COLLECTION,
+	CANNOT_APPEND_METADATA,
+	//Add more???
 	//Cluster Errors
 	INVALID_CLUSTER_STRUCTURE,
 	CLUSTER_ALREADY_EXISTS,
@@ -98,6 +102,8 @@ ErrorMessage := [ErrorType]string {
 	.CANNOT_OPEN_DIRECTORY             = "Cannot Open Directory",
 	.CANNOT_READ_DIRECTORY             = "Cannot Read Files In Directory",
 	.CANNOT_CREATE_DIRECTORY           = "Cannot Create Directory",
+	.CANNOT_CREATE_COLLECTION        = "Cannot Create Collection",
+	.CANNOT_APPEND_METADATA              = "Cannot Append Metadata Header To Collection",
 	.INVALID_CLUSTER_STRUCTURE         = "Invalid Cluster Structure Detected",
 	.CLUSTER_ALREADY_EXISTS             = "Cluster Already Exists Within Collection",
 	.CANNOT_CREATE_CLUSTER             = "Cannot Create Cluster",
