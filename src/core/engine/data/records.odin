@@ -13,7 +13,7 @@ Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 File Description:
             This file contains all the logic for interacting with
-            collections within the OstrichLite engine.
+            records within the OstrichLite engine.
 *********************************************************/
 
 // Creates a new lib.cluster, assigns its members with the passed in args, returns pointer to new lib.Record
