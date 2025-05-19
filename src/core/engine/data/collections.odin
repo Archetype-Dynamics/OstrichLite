@@ -186,16 +186,18 @@ get_all_collection_names :: proc() -> [dynamic]string{
 check_if_collection_exists :: proc(collection: ^lib.Collection) -> bool {
     using lib
 
+    exists:= false
+
 	collectionPath, openSuccess := os.open(STANDARD_COLLECTION_PATH)
 	files, readSuccess := os.read_dir(collectionPath, -1)
 
 	for file in files {
 		if file.name == fmt.tprintf("%s%s", collection.name, OST_EXT) {
-			return true
+		    exists = true
 		}
 	}
 
-	return false
+	return exists
 }
 
 //gets the number of  collections

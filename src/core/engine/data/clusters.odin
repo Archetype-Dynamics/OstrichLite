@@ -257,7 +257,7 @@ erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
 }
 
 //Finds and returns the passed in cluster and all its data as a whole, excluding the identifier typed records
-fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (bool, string){
+fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (string, bool){
  using lib
 
  success:= false
@@ -269,13 +269,13 @@ fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (bool
  clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
  if!clusterExistsInCollection{
     make_new_err(.CANNOT_FIND_CLUSTER, get_caller_location())
-    return success, ""
+    return "", success
  }
 
  data, readSuccess:= read_file(collectionPath, get_caller_location())
  if!readSuccess{
     make_new_err(.CANNOT_READ_FILE, get_caller_location())
-    return success, ""
+    return "", success
  }
 
  defer delete(data)
@@ -298,7 +298,7 @@ fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (bool
     break
  }
 
- return success, strings.clone(clusterAsString)
+ return  strings.clone(clusterAsString), success
 }
 
 //Deletes all data within a cluster excluding the name, id all while retaining the clusters structure
@@ -365,7 +365,7 @@ purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool
     }
 
     if !clusterFound {
-        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_CLUSTER, get_caller_location())
+        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION, get_caller_location())
         return success
     }
 
