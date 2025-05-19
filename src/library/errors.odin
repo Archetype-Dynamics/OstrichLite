@@ -33,6 +33,7 @@ ErrorType :: enum {
 	//Collection errors
 	CANNOT_CREATE_COLLECTION,
 	CANNOT_APPEND_METADATA,
+	COLLECTION_DOES_NOT_EXIST,
 	COLLECTION_ALREADY_EXISTS,
 	//Add more???
 	//Cluster Errors
@@ -44,7 +45,7 @@ ErrorType :: enum {
 	CANNOT_READ_CLUSTER,
 	CANNOT_UPDATE_CLUSTER,
 	CANNOT_APPEND_CLUSTER,
-	CLUSTER_DOES_NOT_EXIST_IN_CLUSTER,
+	CLUSTER_DOES_NOT_EXIST_IN_COLLECTION,
 	CLUSTER_ALREADY_EXISTS_IN_COLLECTION,
 	//Record Errors
 	INVALID_RECORD_DATA,
@@ -112,6 +113,7 @@ ErrorMessage := [ErrorType]string {
 	//Collection errors
 	.CANNOT_CREATE_COLLECTION          = "Failed to create collection",
 	.CANNOT_APPEND_METADATA            = "Failed to append metadata header to collection",
+	.COLLECTION_DOES_NOT_EXIST = "Collection does not exist",
 	.COLLECTION_ALREADY_EXISTS         = "Collection already exists",
 	//Cluster Errors
 	.INVALID_CLUSTER_STRUCTURE         = "Invalid cluster structure detected",
@@ -122,7 +124,7 @@ ErrorMessage := [ErrorType]string {
 	.CANNOT_READ_CLUSTER               = "Failed to read cluster",
 	.CANNOT_UPDATE_CLUSTER             = "Failed to update cluster",
 	.CANNOT_APPEND_CLUSTER             = "Failed to append cluster",
-	.CLUSTER_DOES_NOT_EXIST_IN_CLUSTER            = "Specified cluster does not exist",
+	.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION            = "Specified cluster does not exist",
 	.CLUSTER_ALREADY_EXISTS_IN_COLLECTION = "Cluster already exists in collection",
 	//Record Errors
 	.INVALID_RECORD_DATA               = "Invalid record data",
