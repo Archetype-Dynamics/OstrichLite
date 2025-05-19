@@ -55,11 +55,11 @@ Record :: struct{
     parent: Cluster,
     id: i64,
     name,  value:string,
-    type: RecordTypes
+    type: RecordDataTypes
     // size:int //in bytes??
 }
 
-RecordTypes :: enum {
+RecordDataTypes :: enum {
     INVALID = 0,
 	NULL,
     CHAR,
@@ -90,7 +90,7 @@ RecordTypes :: enum {
 	UUID_ARRAY,
 }
 
-RecordTypesAsString := [RecordTypes]string {
+RecordDataTypesAsString := [RecordDataTypes]string {
     .INVALID = "INVALID",
     .NULL = "NULL" ,
     .CHAR = "CHAR" ,

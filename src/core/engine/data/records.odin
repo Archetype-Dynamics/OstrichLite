@@ -252,13 +252,86 @@ get_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, rec
 	return ""
 }
 
+
+//finds a the passed in record, and physically updates its data type. keeps its value which will eventually need to be changed
+update_records_data_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record, newType: string) -> bool {
+    using lib
+
+    success:= false
+    collectionPath:= concat_standard_collection_name(collection.name)
+
+	data, readSuccess := read_file(collectionPath, get_caller_location())
+	defer delete(data)
+	if !readSuccess {
+	    make_new_err(.CANNOT_READ_FILE, get_caller_location())
+		return success
+	}
+
+	content := string(data)
+	defer delete(content)
+
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	newLines := make([dynamic]string)
+	defer delete(newLines)
+
+	inTargetCluster := false
+	recordUpdated := false
+
+	// Find the cluster and update the record
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+
+		if trimmedLine == "{" {
+			inTargetCluster = false
+		}
+
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
+			inTargetCluster = true
+		}
+
+		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", record.name)) {
+			// Keep the original indentation
+			leadingWhitespace := strings.split(line, record.name)[0]
+			// Create new line with updated type
+			newLine := fmt.tprintf("%s%s :%s: %s", leadingWhitespace, record.name, newType, record.value)
+			append(&newLines, newLine)
+			recordUpdated = true
+		} else {
+			append(&newLines, line)
+		}
+
+		if inTargetCluster && trimmedLine == "}," {
+			inTargetCluster = false
+		}
+	}
+
+	if !recordUpdated {
+		make_new_err(.CANNOT_UPDATE_RECORD, get_caller_location())
+		return success
+	}
+
+	// Write the updated content back to file
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := write_to_file(collectionPath, transmute([]byte)newContent, get_caller_location())
+	if !writeSuccess{
+	    make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
+	    return success
+	}else{
+	    success = true
+	}
+
+	return success
+}
+
 //Used to ensure that the passed in records type is valid and if its shorthand assign the value as the longhand
 //e.g if INT then assign INTEGER. Returns the type
 //Remember to delete() the return value in the calling procedure
 set_record_type :: proc(record: ^lib.Record) -> string {
     using lib
 
-	for type in RecordTypes {
+	for type in RecordDataTypes {
 		if record.type == type {
 			#partial switch (record.type)
 			{ 	//The first 8 cases handle if the type is shorthand
@@ -293,9 +366,71 @@ set_record_type :: proc(record: ^lib.Record) -> string {
 			}
 		}
 	}
-	return strings.clone(RecordTypesAsString[record.type])
+	return strings.clone(RecordDataTypesAsString[record.type])
 }
 
+
+//Returns the data type of the passed in record
+get_record_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> ( string, bool) {
+    using lib
+
+    success:= false
+
+    collectionPath:= concat_standard_collection_name(collection.name)
+	data, readSuccess := read_file(collectionPath, get_caller_location())
+	defer delete(data)
+
+	if !readSuccess {
+	    make_new_err(.CANNOT_READ_FILE, get_caller_location())
+		return "", success
+	}
+
+	content := string(data)
+	defer delete(content)
+
+	clusters := strings.split(content, "},")
+	defer delete(clusters)
+
+	for c in clusters {
+		//check for cluster
+		if strings.contains(c, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
+			lines := strings.split(c, "\n")
+			for line in lines {
+				line := strings.trim_space(line)
+				// Check if this line contains our record
+				if strings.has_prefix(line, fmt.tprintf("%s :", record.name)) {
+					// Split the line into parts using ":"
+					parts := strings.split(line, ":")
+					if len(parts) >= 2 {
+					    success = true
+						// Return the type of the record
+						return strings.clone(strings.trim_space(parts[1])), success
+					}
+				}
+			}
+		}
+	}
+
+	return "", success
+}
+
+set_record_value ::proc(collection: ^lib.Collection, cluter: ^lib.Cluster, record: ^lib.Record) -> bool {
+    using lib
+
+    success:= false
+    collectionPath:= concat_standard_collection_name(collection.name)
+
+    data, readSuccess:= read_file(collectionPath, get_caller_location())
+    defer delete(data)
+    if !readSuccess{
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+        return success
+    }
+
+
+    //Todo: continue adding logic
+    return success
+}
 
 //Reads over the passed in collection and a specific cluster for a record by name, returns true if found
 check_if_record_exists_in_cluster :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> bool {
@@ -340,3 +475,4 @@ check_if_record_exists_in_cluster :: proc(collection:^lib.Collection, cluster:^l
 
 	return success
 }
+
