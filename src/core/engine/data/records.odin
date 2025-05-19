@@ -1120,6 +1120,10 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 
 
 
+//TODO: need to add the following helper procs:
+//GET_RECORD_SIZE
+//GET_RECORD_COUNT_WITHIN_CLUSTER
+//GET_RECORD_COUNT_WITHIN_COLLECTION
 
 
 //Reads over the passed in collection and a specific cluster for a record by name, returns true if found
@@ -1176,17 +1180,29 @@ parse_record :: proc(recordAsString: string) -> lib.Record {
     using strings
     using strings
 
+    newRecordDataType: RecordDataTypes
+
 	recordParts := split(recordAsString, ":")
 	if len(recordParts) < 2 {
 		return Record{}
 	}
+
 	recordName := trim_space(recordParts[0])
 	recordType := trim_space(recordParts[1])
 	recordValue := trim_space(recordParts[2])
 
+	// Find the enum value by looking up the string in the RecordDataTypesAsString map
+	for  dataTypeStringValue, dataTypeToken in RecordDataTypesAsString {
+		if dataTypeStringValue == recordType {
+			newRecordDataType= dataTypeToken
+			break
+		}
+	}
+
 	return Record {
 		name = clone(recordName),
-		// type = clone(.), //I cannot for the life of me remember how to extract the stirng value here...
+		type = newRecordDataType,
 		value = clone(recordValue),
 	}
+
 }
