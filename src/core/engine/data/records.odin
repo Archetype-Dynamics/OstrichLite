@@ -25,7 +25,7 @@ make_new_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
     record.parent = cluster^
     record.id = 0
     record.name= recordName
-    record.type = ""
+    record.type = .INVALID
     record.value = ""
 
     return record
@@ -250,6 +250,50 @@ get_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, rec
 
 	make_new_err(.CANNOT_READ_RECORD,get_caller_location())
 	return ""
+}
+
+//Used to ensure that the passed in records type is valid and if its shorthand assign the value as the longhand
+//e.g if INT then assign INTEGER. Returns the type
+//Remember to delete() the return value in the calling procedure
+set_record_type :: proc(record: ^lib.Record) -> string {
+    using lib
+
+	for type in RecordTypes {
+		if record.type == type {
+			#partial switch (record.type)
+			{ 	//The first 8 cases handle if the type is shorthand
+			case .STR:
+				record.type = .STRING
+				break
+			case .INT:
+				record.type = .INTEGER
+				break
+			case .FLT:
+				record.type = .FLOAT
+				break
+			case .BOOL:
+				record.type = .BOOLEAN
+				break
+			case .STR_ARRAY:
+				record.type = .STRING_ARRAY
+				break
+			case .INT_ARRAY:
+				record.type = .INTEGER_ARRAY
+				break
+			case .FLT_ARRAY:
+				record.type = .FLOAT_ARRAY
+				break
+			case .BOOL_ARRAY:
+				record.type = .BOOLEAN_ARRAY
+				break
+			case:
+				//The defualt case just sets the variable to the value so long as its valid
+				record.type = type
+				break
+			}
+		}
+	}
+	return strings.clone(RecordTypesAsString[record.type])
 }
 
 
