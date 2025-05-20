@@ -39,6 +39,7 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
    }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
 
     file, creationSuccess:= os.open(collectionPath, os.O_CREATE, 0o666)
 	defer os.close(file)

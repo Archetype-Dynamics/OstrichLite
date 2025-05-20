@@ -58,6 +58,7 @@ create_record_within_cluster :: proc(collection: ^lib.Collection, cluster: ^lib.
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
     data, readSuccess:= read_file(collectionPath, get_caller_location())
 
     if !readSuccess {
@@ -252,6 +253,8 @@ update_record_data_type :: proc(collection: ^lib.Collection, cluster: ^lib.Clust
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
 	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
 	if !readSuccess {
@@ -342,6 +345,8 @@ update_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, 
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     defer delete(data)
 
@@ -651,6 +656,8 @@ fetch_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record:
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     if !readSuccess{
         make_new_err(.CANNOT_READ_FILE, get_caller_location())
@@ -836,6 +843,8 @@ get_record_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
 	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
 
@@ -898,6 +907,8 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     defer delete(data)
     if !readSuccess{
@@ -1133,6 +1144,8 @@ get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, 
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     defer delete(data)
     if !readSuccess{
@@ -1193,6 +1206,8 @@ get_record_count_within_cluster :: proc(collection:^lib.Collection, cluster:^lib
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     defer delete(data)
     if !readSuccess{
@@ -1256,6 +1271,8 @@ get_record_count_within_collection :: proc(collection:^lib.Collection, cluster:^
     }
 
     collectionPath:= concat_standard_collection_name(collection.name)
+    defer delete(collectionPath)
+
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     defer delete(data)
     if !readSuccess{
