@@ -42,14 +42,14 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
     defer free(buf)
 
     collectionExists:= check_if_collection_exists(collection)
-    if collectionExists{
-        make_new_err(.COLLECTION_ALREADY_EXISTS, get_caller_location())
+    if !collectionExists{
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
         return  success
     }
 
-    clusterExists:= check_if_cluster_exsists_in_collection(collection, cluster)
-    if !clusterExists{
-        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION, get_caller_location())
+    clusterAlreadyExists:= check_if_cluster_exsists_in_collection(collection, cluster)
+    if clusterAlreadyExists{
+        make_new_err(.CLUSTER_ALREADY_EXISTS_IN_COLLECTION, get_caller_location())
         return  success
     }
 
@@ -116,8 +116,18 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
         return  success
     }
 
-    //Check if the new name is already in use by a cluster in the passed in collection
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
+    //Check that the name of the cluster that the user wants to rename DOES IN FACT exist
+    clusterExists:= check_if_cluster_exsists_in_collection(collection, cluster)
+    if !clusterExists{
+        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION, get_caller_location())
+        return  success
+    }
+
+    newCluster:= make_new_cluster(collection, newName)
+    defer free(newCluster)
+
+    //Now check if a cluster with the new name is already in use by a cluster in the passed in collection
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, newCluster)
     if clusterExistsInCollection {
         make_new_err(.CLUSTER_ALREADY_EXISTS, get_caller_location())
         return success
@@ -125,9 +135,6 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
 
     collectionPath:= concat_standard_collection_name(collection.name)
     defer delete(collectionPath)
-
-    newCluster:= make_new_cluster(collection, newName )
-    defer free(newCluster)
 
     data, readSuccess:= read_file(collectionPath, get_caller_location())
     defer delete(data)
@@ -407,7 +414,6 @@ check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, clust
         make_new_err(.CANNOT_READ_FILE, get_caller_location())
         return success
     }
-
 
     clusterBlocks := strings.split(string(data), "},")
     defer delete(clusterBlocks)
