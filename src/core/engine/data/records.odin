@@ -1012,14 +1012,14 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.NULL]:
 		record.type = .NULL
-		valueAny = .NULL
+		valueAny = RecordDataTypesStrings[.NULL]
 		setValueOk = true
 		break
 
 	//Arrays of primitives and complex
 	case RecordDataTypesStrings[.INTEGER_ARRAY]:
 		record.type = .INTEGER_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.INTEGER_ARRAY], record.value)
+		verifiedValue := verify_array_values(record)
 		if !verifiedValue {
 			return false
 		}
@@ -1029,7 +1029,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.FLOAT_ARRAY]:
 		record.type = .FLOAT_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.FLOAT], record.value)
+		verifiedValue := verify_array_values(record)
 		if !verifiedValue {
 			return false
 		}
@@ -1039,7 +1039,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.BOOLEAN_ARRAY]:
 		record.type = .BOOLEAN_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.BOOLEAN_ARRAY], record.value)
+		verifiedValue := verify_array_values(record)
 		if !verifiedValue {
 			return false
 		}
@@ -1060,7 +1060,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.DATE_ARRAY]:
-		record.type = .DATA_ARRAY
+		record.type = .DATE_ARRAY
 		dateArrayValue, ok := convert_record_to_date_array(record.value)
 		valueAny = dateArrayValue
 		setValueOk = ok
@@ -1101,7 +1101,6 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 
 	return success
 }
-
 
 get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
     using lib
