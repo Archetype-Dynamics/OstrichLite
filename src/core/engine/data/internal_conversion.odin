@@ -48,42 +48,86 @@ convert_record_to_bool :: proc(rValue: string) -> (bool, bool) {
 	}
 }
 
+//converts the passed in record value to a valid date format as a string and returns it
+convert_record_to_date :: proc(rValue: string) -> (string, bool) {
+	dateValue, dateParseOk := parse_date(rValue)
+	if dateParseOk == true {
+		return dateValue, true
+	}
 
+	return "", false
+}
+
+//converts the passed in record value to a valid time format as a string and returns it
+convert_record_to_time :: proc(rValue: string) -> (string, bool) {
+	timeValue, timeParseOk := parse_time(rValue)
+	if timeParseOk == true {
+		return timeValue, true
+	}
+
+	return "", false
+}
+
+//converts the passed in record value to a valid datetime format as a string and returns it
+//example: 2023-08-20T12:34:56
+convert_record_to_datetime :: proc(rValue: string) -> (string, bool) {
+	datetimeValue, datetimeParseOk := parse_datetime(rValue)
+	if datetimeParseOk == true {
+		return datetimeValue, true
+	}
+
+	return "", false
+}
+
+//converts the passed in record value to a valid uuid format as a string and returns it
+convert_record_to_uuid :: proc(rValue: string) -> (string, bool) {
+	uuidValue, uuidParseOk := parse_uuid(rValue)
+	if uuidParseOk == true {
+		return uuidValue, true
+	}
+
+	return "", false
+}
+
+
+//converts the passed in record value to a valid int array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_int_array :: proc(rValue: string) -> ([dynamic]int, bool) {
 	newIntArray := make([dynamic]int)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		value, ok := strconv.parse_int(item)
+	for element in parsedArray {
+		value, ok := strconv.parse_int(element)
 		append(&newIntArray, value)
 	}
 
 	return newIntArray, true
 }
 
+//converts the passed in record value to a valid float array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_float_array :: proc(rValue: string) -> ([dynamic]f64, bool) {
 	newFloatArray := make([dynamic]f64)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		value, ok := strconv.parse_f64(item)
+	for element in parsedArray {
+		value, ok := strconv.parse_f64(element)
 		append(&newFloatArray, value)
 	}
 
 	return newFloatArray, true
 }
 
+//converts the passed in record value to a valid bool array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_bool_array :: proc(rValue: string) -> ([dynamic]bool, bool) {
 	newBoolArray := make([dynamic]bool)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		itemLower := strings.to_lower(strings.trim_space(item))
-		defer delete(itemLower)
+	for element in parsedArray {
+		elementLower := strings.to_lower(strings.trim_space(element))
+		defer delete(elementLower)
 
-		if itemLower == "true" || itemLower == "t" {
+		if elementLower == "true" || elementLower == "t" {
 			append(&newBoolArray, true)
-		} else if itemLower == "false" || itemLower == "f" {
+		} else if elementLower == "false" || elementLower == "f" {
 			append(&newBoolArray, false)
 		} else {
 			fmt.printfln("Failed to parse bool array")
@@ -94,50 +138,54 @@ convert_record_to_bool_array :: proc(rValue: string) -> ([dynamic]bool, bool) {
 	return newBoolArray, true
 }
 
+//converts the passed in record value to a valid string array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_string_array :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newStringArray := make([dynamic]string)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		append(&newStringArray, item)
+	for element in parsedArray {
+		append(&newStringArray, element)
 	}
 
 	return newStringArray, true
 }
 
+//converts the passed in record value to a valid char array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_char_array :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newCharArray := make([dynamic]string)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		append(&newCharArray, item)
+	for element in parsedArray {
+		append(&newCharArray, element)
 	}
 
 	return newCharArray, true
 }
 
+//converts the passed in record value to a valid date array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_date_array :: proc(rValue: string) -> ([dynamic]string, bool) {
-	newArray := make([dynamic]string)
+	newDateArray := make([dynamic]string)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		dateValue, dateParseOk := parse_date(item)
+	for element in parsedArray {
+		dateValue, dateParseOk := parse_date(element)
 		if dateParseOk {
-			append(&newArray, date)
+			append(&newDateArray, dateValue)
 		} else {
-			return newArray, false
+			return newDateArray, false
 		}
 	}
 
-	return newArray, true
+	return newDateArray, true
 }
 
+//converts the passed in record value to a valid time array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_time_array :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newTimeArray := make([dynamic]string)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		timeValue, timeParseOk := parse_time(item)
+	for element in parsedArray {
+		timeValue, timeParseOk := parse_time(element)
 		if timeParseOk {
 			append(&newTimeArray, timeValue)
 		} else {
@@ -148,12 +196,13 @@ convert_record_to_time_array :: proc(rValue: string) -> ([dynamic]string, bool) 
 	return newTimeArray, true
 }
 
+//converts the passed in record value to a valid datetime array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_datetime_array :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newDateTimeArray := make([dynamic]string)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		datetimeValue, datetimeParseOk := parse_datetime(item)
+	for element in parsedArray {
+		datetimeValue, datetimeParseOk := parse_datetime(element)
 		if datetimeParseOk {
 			append(&newDateTimeArray, datetimeValue)
 		} else {
@@ -164,48 +213,13 @@ convert_record_to_datetime_array :: proc(rValue: string) -> ([dynamic]string, bo
 	return newDateTimeArray, true
 }
 
-convert_record_to_date :: proc(rValue: string) -> (string, bool) {
-	dateValue, dateParseOk := parse_date(rValue)
-	if dateParseOk == true {
-		return dateValue, true
-	}
-
-	return "", false
-}
-
-convert_record_to_time :: proc(rValue: string) -> (string, bool) {
-	timeValue, timeParseOk := parse_time(rValue)
-	if timeParseOk == true {
-		return timeValue, true
-	}
-
-	return "", false
-}
-
-convert_record_to_datetime :: proc(rValue: string) -> (string, bool) {
-	datetimeValue, datetimeParseOk := parse_datetime(rValue)
-	if datetimeParseOk == true {
-		return datetimeValue, true
-	}
-
-	return "", false
-}
-
-convert_record_to_uuid :: proc(rValue: string) -> (string, bool) {
-	uuidValue, uuidParseOk := parse_uuid(rValue)
-	if uuidParseOk == true {
-		return uuidValue, true
-	}
-
-	return "", false
-}
-
+//converts the passed in record value to a valid uuid array format and returns it
 //Dont forget to delete() the return value in calling procedure
 convert_record_to_uuid_array :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newUUIDArray := make([dynamic]string)
 	parsedArray := parse_array(rValue)
-	for item in parsedArray {
-		uuidValue, uuidParseOk := parse_uuid(item)
+	for element in parsedArray {
+		uuidValue, uuidParseOk := parse_uuid(element)
 		if uuidParseOk {
 			append(&newUUIDArray, uuidValue)
 		} else {
@@ -219,67 +233,85 @@ convert_record_to_uuid_array :: proc(rValue: string) -> ([dynamic]string, bool) 
 
 //Handles the conversion of a record value from the old type to a new type
 //this could also go into the records.odin file but will leave it here for now
-CONVERT_SINGLE_RECORD_VALUE_TO_NEW_TYPE :: proc(value, oldT, newT: string) -> (string, bool) {
-	if len(value) == 0 {
-		return "", true
-	}
-	oldVIsArray := strings.has_prefix(oldT, "[]")
-	newVIsArray := strings.has_prefix(newT, "[]")
+//Dont forget to delete() the return value in calling procedure
+convert_record_with_type_change :: proc(value, oldT, newT: string) -> (string, bool) {
+    using strings
 
+    succes:= false
+
+    if len(value) == 0 {
+		return "", succes
+	}
+
+	oldValueIsArray := strings.has_prefix(oldT, "[]")
+	newValueIsArray := strings.has_prefix(newT, "[]")
 
 	//handle array conversion
-	if oldVIsArray && newVIsArray { 	//if both are arrays
-		values := parse_array(value) //parse the array
-		newValues := make([dynamic]string) //create a new array to store the converted values
-		defer delete(newValues)
+	if oldValueIsArray && newValueIsArray {
+		parsedArray := parse_array(value)
+		newArray := make([dynamic]string)
+		defer delete(newArray)
 
-		for val in values { 	//for each value in the array
-			converted, ok := CONVERT_SINGLE_RECORD_VALUE(value, oldT, newT) //convert the value
-			if !ok {
-				return "", false
+		for element in parsedArray {
+			convertedValue, conversionSuccess := convert_primitive_value(element, oldT, newT) //convert the value
+			if !conversionSuccess {
+				return "", succes
+			}else{
+			    append(&newArray, convertedValue) //append the converted value to the new array
+				succes = true
 			}
-			append(&newValues, converted) //append the converted value to the new array
 		}
-		return strings.join(newValues[:], ","), true
+
+		return strings.join(newArray[:], ","), succes
 	}
 
 	//handle single value conversion
-	if !oldVIsArray && newVIsArray { 	//if the old value is not an array and the new value is
-		converted, ok := CONVERT_SINGLE_RECORD_VALUE(value, oldT, newT) //convert the single value
-		if !ok {
-			return "", false
+	if !oldValueIsArray && newValueIsArray { 	//if the old value is not an array and the new value is
+		convertedValue, coversionSuccess := convert_primitive_value(value, oldT, newT) //convert the single value
+		if !coversionSuccess {
+			return "", succes
+		}else{
+		    succes = true
 		}
-		return converted, true
+
+		return convertedValue, true
 	}
 
 	//handle array to single value conversion
-	if oldVIsArray && !newVIsArray { 	//if the old value is an array and the new value is not
-		values := parse_array(value) //parse the array
-		if len(values) > 0 { 	//if there are values in the array
-			firstValue := utils.strip_array_brackets(values[0])
-			return CONVERT_SINGLE_RECORD_VALUE(firstValue, oldT, newT)
+	if oldValueIsArray && !newValueIsArray { 	//if the old value is an array and the new value is not
+		parsedArray := parse_array(value) //parse the array
+		if len(parsedArray) > 0 { 	//if there are parsedArray in the array
+		    firstValue := lib.strip_array_brackets(parsedArray[0])
+			convertedValue, conversionSuccess:= convert_primitive_value(firstValue, oldT, newT)
+			if !conversionSuccess{
+			    return "", succes
+			}else{
+			    succes = true
+			}
+			return convertedValue, succes
 		}
-		return "", true
 	}
 
-	//if both are single values
-	return CONVERT_SINGLE_RECORD_VALUE(value, oldT, newT)
+	//if the old and new value are both single values
+	convertedValue, conversionSuccess:=convert_primitive_value(value, oldT, newT)
+	if !conversionSuccess{
+	    return "", false
+	}else {
+	    succes = true
+	}
+
+	return convertedValue, succes
 }
 
 
 //Used to convert a single record value to a different value depending on the new type provided.
 //e.g if converting an int: 123 to a string then it will return "123"
-//filthy fucking code I am so sorry - Marshall
-CONVERT_SINGLE_RECORD_VALUE :: proc(
-	value: string,
-	oldType: string,
-	newType: string,
-) -> (
-	string,
-	bool,
-) {
-	using const
-	using types
+//Dont forget to free the memory in the calling procedure
+convert_primitive_value :: proc(value: string, oldType: string, newType: string) -> (string, bool) {
+	using lib
+	using fmt
+	using strings
+	using strconv
 
 	//if the types are the same, no conversion is needed
 	if oldType == newType {
@@ -287,54 +319,56 @@ CONVERT_SINGLE_RECORD_VALUE :: proc(
 	}
 
 	switch (newType) {
-	case Token[.STRING]:
+	case RecordDataTypesStrings[.STRING]:
 		//New type is STRING
 		switch (oldType) {
-		case Token[.INTEGER], Token[.FLOAT], Token[.BOOLEAN]:
+		case RecordDataTypesStrings[.INTEGER], RecordDataTypesStrings[.FLOAT], RecordDataTypesStrings[.BOOLEAN]:
 			//Old type is INTEGER, FLOAT, or BOOLEAN
-			value := utils.append_qoutations(value)
-			return value, true
-		case Token[.STRING_ARRAY]:
-			newValue := utils.strip_array_brackets(value)
-			if len(value) > 0 {
-				return utils.append_qoutations(value), true
+			quotedValue := append_qoutations(value)
+			return quotedValue, true
+		case RecordDataTypesStrings[.STRING_ARRAY]:
+			newValue := strip_array_brackets(value)
+			if len(newValue) > 0 {
+				quotedValue := append_qoutations(newValue)
+				return quotedValue, true
 			}
 			return "\"\"", true
 		case:
 			return "", false
 		}
-	case Token[.INTEGER]:
+	case RecordDataTypesStrings[.INTEGER]:
 		//New type is INTEGER
 		switch (oldType) {
-		case Token[.STRING]:
+		case RecordDataTypesStrings[.STRING]:
 			//Old type is STRING
-			_, ok := strconv.parse_int(value, 10)
-			if !ok {
+			_, intParseOK := parse_int(value, 10)
+			if !intParseOK {
 				return "", false
 			}
 			return value, true
 		case:
 			return "", false
 		}
-	case Token[.FLOAT]:
+	case RecordDataTypesStrings[.FLOAT]:
 		//New type is FLOAT
 		switch (oldType) {
-		case Token[.STRING]:
+		case RecordDataTypesStrings[.STRING]:
 			//Old type is STRING
-			_, ok := strconv.parse_f64(value)
-			if !ok {
+			_, floatParseOk := parse_f64(value)
+			if !floatParseOk {
 				return "", false
 			}
 			return value, true
 		case:
 			return "", false
 		}
-	case Token[.BOOLEAN]:
+	case RecordDataTypesStrings[.BOOLEAN]:
 		//New type is BOOLEAN
 		switch (oldType) {
-		case Token[.STRING]:
+		case RecordDataTypesStrings[.STRING]:
 			//Old type is STRING
 			lowerStr := strings.to_lower(strings.trim_space(value))
+			defer delete(lowerStr)
 			if lowerStr == "true" || lowerStr == "false" {
 				return lowerStr, true
 			}
@@ -343,105 +377,112 @@ CONVERT_SINGLE_RECORD_VALUE :: proc(
 			return "", false
 		}
 	//ARRAY CONVERSIONS
-	case Token[.STRING_ARRAY]:
+	case RecordDataTypesStrings[.STRING_ARRAY]:
 		// New type is STRING_ARRAY
 		switch (oldType) {
-		case Token[.STRING]:
+		case RecordDataTypesStrings[.STRING]:
 			// Remove any existing quotes
-			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
+			unquotedValue := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
+			defer delete(unquotedValue)
 			// Format as array with proper quotes
-			return value, true
+			return fmt.tprintf("[\"%s\"]", unquotedValue), true
 		case:
 			return "", false
 		}
-	case Token[.INTEGER_ARRAY]:
+	case RecordDataTypesStrings[.INTEGER_ARRAY]:
 		// New type is INTEGER_ARRAY
 		switch (oldType) {
-		case Token[.INTEGER]:
-			// Remove any existing quotes
-			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
-			// Format as array with proper quotes
-			return value, true
+		case RecordDataTypesStrings[.INTEGER]:
+			// Format as array
+			return tprintf("[%s]", value), true
 		case:
 			return "", false
 		}
-	case Token[.BOOLEAN_ARRAY]:
+	case RecordDataTypesStrings[.BOOLEAN_ARRAY]:
 		// New type is BOOLEAN_ARRAY
 		switch (oldType) {
-		case Token[.BOOLEAN]:
-			// Remove any existing quotes
-			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
-			// Format as array with proper quotes
-			return value, true
+		case RecordDataTypesStrings[.BOOLEAN]:
+			// Format as array
+			return tprintf("[%s]", value), true
 		case:
 			return "", false
 		}
-	case Token[.FLOAT_ARRAY]:
+	case RecordDataTypesStrings[.FLOAT_ARRAY]:
 		// New type is FLOAT_ARRAY
 		switch (oldType) {
-		case Token[.FLOAT]:
-			// Remove any existing quotes
-			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
-			// Format as array with proper quotes
-			return value, true
+		case RecordDataTypesStrings[.FLOAT]:
+			// Format as array
+			return tprintf("[%s]", value), true
 		case:
 			return "", false
 		}
-	case:
-		return "", false
 	}
 
 	return "", false
 }
 
 
+//The only proc in this file that actually physically causes a change in a collection
 //handles a records type and value change
-HANDLE_RECORD_TYPE_CONVERSION :: proc(colPath, cn, rn, newType: string) -> bool {
-	using data
+convert_record_type_then_update :: proc(collection: ^lib.Collection,cluster:^lib.Cluster, record:^lib.Record, newType: string) -> bool {
+	using lib
 
-	oldType, _ := GET_RECORD_TYPE(colPath, cn, rn)
-	recordValue := GET_RECORD_VALUE(colPath, cn, oldType, rn)
+	success:= false
+	oldType, getRecordTypeSuccess := get_record_type(collection, cluster, record)
+	if !getRecordTypeSuccess{
+	    return success
+	}
 
-	new_value, success := CONVERT_SINGLE_RECORD_VALUE_TO_NEW_TYPE(recordValue, oldType, newType)
-	if !success {
-		utils.log_err("Could not convert value to new type", #procedure)
-		return false
+	recordValue, getRecordValueSuccess := get_record_value(collection, cluster, record)
+	if !getRecordValueSuccess{
+	    return success
+	}
+
+
+	newRecordValue, conversionSuccess := convert_record_with_type_change(recordValue, oldType, newType)
+	if !conversionSuccess {
+		return success
 	} else {
-
-		typeChangeSucess := CHANGE_RECORD_TYPE(colPath, cn, rn, recordValue, newType)
-		valueChangeSuccess := SET_RECORD_VALUE(colPath, cn, rn, new_value)
+		typeChangeSucess := update_record_data_type(collection, cluster, record , newType)
+		valueChangeSuccess := update_record_value(collection, cluster, record, newRecordValue) //might need to use set_record_value() but that would requir refactor of that proc to accept new arg
 		if !typeChangeSucess || !valueChangeSuccess {
-			utils.log_err("Could not change record type or value", #procedure)
-			return false
+			return success
 		} else if typeChangeSucess && valueChangeSuccess {
-			return true
+		    success =  true
 		}
 	}
 
-	return false
+	return success
 }
 
 
-//This proc looks for the passed in records array value and depending on the record type will format that value
-//If the type is a []CHAR then remove the double qoutes and replace them with single qoutes
-//if []DATE, []TIME, []DATETIME then remove the qoutes and replace them with nothing
-MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
-	using types
-	// Get the current record value
-	recordValue := GET_RECORD_VALUE(fn, cn, rType, rn)
-	if recordValue == "" {
-		return "", false
+//This proc formats array values based on their type:
+//- For []CHAR arrays: Replaces double quotes with single quotes
+//- For []DATE, []TIME, []DATETIME arrays: Removes quotes entirely
+//Dont forget to free the memory in the calling procedure
+format_array_values_by_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> (string, bool) {
+	using lib
+	using strings
+
+	success:= false
+
+	recordValue, getRecordSuccess := get_record_value(collection, cluster, record)
+	if !getRecordSuccess || recordValue == ""{
+		return "", success
 	}
 
 	// Remove the outer brackets
-	value := strings.trim_space(recordValue)
-	if !strings.has_prefix(value, "[") || !strings.has_suffix(value, "]") {
+	value := trim_space(recordValue)
+	defer delete(value)
+
+	if !has_prefix(value, "[") || !has_suffix(value, "]") {
 		return "", false
 	}
+
 	value = value[1:len(value) - 1]
 
 	// Split the array elements
-	elements := strings.split(value, ",")
+	elements := split(value, ",")
 	defer delete(elements)
 
 	// Create a new array to store modified values
@@ -450,17 +491,18 @@ MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
 
 	// Process each element based on type
 	for element in elements {
-		element := strings.trim_space(element)
+		element := trim_space(element)
+		defer delete(element)
 
-		switch rType {
-		case Token[.CHAR_ARRAY]:
+		#partial switch record.type {
+		case .CHAR_ARRAY:
 			// Replace double quotes with single quotes
-			if strings.has_prefix(element, "\"") && strings.has_suffix(element, "\"") {
+			if has_prefix(element, "\"") && has_suffix(element, "\"") {
 				element = fmt.tprintf("'%s'", element[1:len(element) - 1])
 			}
-		case Token[.DATE_ARRAY], Token[.TIME_ARRAY], Token[.DATETIME_ARRAY]:
+		case .DATE_ARRAY, .TIME_ARRAY, .DATETIME_ARRAY:
 			// Remove quotes entirely
-			if strings.has_prefix(element, "\"") && strings.has_suffix(element, "\"") {
+			if has_prefix(element, "\"") && has_suffix(element, "\"") {
 				element = element[1:len(element) - 1]
 			}
 		}
@@ -471,7 +513,12 @@ MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
 	result := fmt.tprintf("[%s]", strings.join(modifiedElements[:], ", "))
 
 	// Update the record with the modified value
-	success := UPDATE_RECORD(fn, cn, rn, result)
+	updateRecordSuccess := update_record_value(collection, cluster, record, result)
+	if !updateRecordSuccess{
+	    return "", success
+	}else{
+	    success  = true
+	}
 
 	return result, success
 }
