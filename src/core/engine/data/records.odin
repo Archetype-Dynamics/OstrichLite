@@ -933,104 +933,54 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 
 	//Freeing memory for these at bottom of procedure
 	stringArrayValue, timeArrayValue, dateTimeArrayValue, dateArrayValue, uuidArrayValue:[dynamic]string
+	defer delete(intArrayValue)
+	defer delete(fltArrayValue)
+	defer delete(boolArrayValue)
+	defer delete(stringArrayValue)
+	defer delete(dateArrayValue)
+	defer delete(timeArrayValue)
+	defer delete(dateTimeArrayValue)
+	defer delete(uuidArrayValue)
 
 	//Standard value allocation
 	valueAny: any = 0
 	ok: bool = false
 	setValueOk := false
+
 	switch (recordType) {
+	//Single value primitives and complex
 	case RecordDataTypesStrings[.INTEGER]:
 		record.type = .INTEGER
-		valueAny, ok = CONVERT_RECORD_TO_INT(rValue)
+		valueAny, ok = convert_record_to_int(record.value)
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.FLOAT]:
 		record.type = .FLOAT
-		valueAny, ok = CONVERT_RECORD_TO_FLOAT(rValue)
+		valueAny, ok = covert_record_to_float(record.value)
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.BOOLEAN]:
 		record.type = .BOOLEAN
-		valueAny, ok = CONVERT_RECORD_TO_BOOL(rValue)
+		valueAny, ok = convert_record_to_bool(record.value)
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.STRING]:
 		record.type = .STRING
-		valueAny = append_qoutations(rValue)
+		valueAny = append_qoutations(record.value)
 		setValueOk = true
 		break
 	case RecordDataTypesStrings[.CHAR]:
 		record.type = .CHAR
-		if len(rValue) != 1 {
+		if len(record.value) != 1 {
 			setValueOk = false
 		} else {
-			valueAny = append_single_qoutations__string(rValue)
+			valueAny = append_single_qoutations__string(record.value)
 			setValueOk = true
 		}
 		break
-	case RecordDataTypesStrings[.INTEGER_ARRAY]:
-		record.type = .INTEGER_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.INTEGER_ARRAY], rValue)
-		if !verifiedValue {
-			return false
-		}
-		intArrayValue, ok := CONVERT_RECORD_TO_INT_ARRAY(rValue)
-		valueAny = intArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.FLOAT_ARRAY]:
-		record.type = .FLOAT_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.FLOAT], rValue)
-		if !verifiedValue {
-			return false
-		}
-		fltArrayValue, ok := CONVERT_RECORD_TO_FLOAT_ARRAY(rValue)
-		valueAny = fltArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.BOOLEAN_ARRAY]:
-		record.type = .BOOLEAN_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.BOOLEAN_ARRAY], rValue)
-		if !verifiedValue {
-			return false
-		}
-		boolArrayValue, ok := CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
-		valueAny = boolArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.STRING_ARRAY]:
-		record.type = .STRING_ARRAY
-		stringArrayValue, ok := CONVERT_RECORD_TO_STRING_ARRAY(rValue)
-		valueAny = stringArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.CHAR_ARRAY]:
-		record.type = .CHAR_ARRAY
-		charArrayValue, ok := CONVERT_RECORD_TO_CHAR_ARRAY(rValue)
-		valueAny = charArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.DATE_ARRAY]:
-		record.type = .DATA_ARRAY
-		dateArrayValue, ok := CONVERT_RECORD_TO_DATE_ARRAY(rValue)
-		valueAny = dateArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.TIME_ARRAY]:
-		record.type = .TIME_ARRAY
-		timeArrayValue, ok := CONVERT_RECORD_TO_TIME_ARRAY(rValue)
-		valueAny = timeArrayValue
-		setValueOk = ok
-		break
-	case RecordDataTypesStrings[.DATETIME_ARRAY]:
-		record.type = .DATETIME_ARRAY
-		dateTimeArrayValue, ok := CONVERT_RECORD_TO_DATETIME_ARRAY(rValue)
-		valueAny = dateTimeArrayValue
-		setValueOk = ok
-		break
 	case RecordDataTypesStrings[.DATE]:
 		record.type = .DATE
-		date, ok := CONVERT_RECORD_TO_DATE(rValue)
+		date, ok := convert_record_to_date(record.value)
 		if ok {
 			valueAny = date
 			setValueOk = ok
@@ -1038,7 +988,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.TIME]:
 		record.type = .TIME
-		time, ok := CONVERT_RECORD_TO_TIME(rValue)
+		time, ok := convert_record_to_time(record.value)
 		if ok {
 			valueAny = time
 			setValueOk = ok
@@ -1046,7 +996,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.DATETIME]:
 		record.type = .DATETIME
-		dateTime, ok := CONVERT_RECORD_TO_DATETIME(rValue)
+		dateTime, ok := convert_record_to_datetime(record.value)
 		if ok {
 			valueAny = dateTime
 			setValueOk = ok
@@ -1054,65 +1004,100 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.UUID]:
 		record.type = .UUID
-		uuid, ok := CONVERT_RECORD_TO_UUID(rValue)
+		uuid, ok := convert_record_to_uuid(record.value)
 		if ok {
 			valueAny = uuid
 			setValueOk = ok
 		}
-		break
-	case RecordDataTypesStrings[.UUID_ARRAY]:
-		record.type = .UUID_ARRAY
-		uuidArrayValue, ok := CONVERT_RECORD_TO_UUID_ARRAY(rValue)
-		valueAny = uuidArrayValue
-		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.NULL]:
 		record.type = .NULL
 		valueAny = .NULL
 		setValueOk = true
 		break
+
+	//Arrays of primitives and complex
+	case RecordDataTypesStrings[.INTEGER_ARRAY]:
+		record.type = .INTEGER_ARRAY
+		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.INTEGER_ARRAY], record.value)
+		if !verifiedValue {
+			return false
+		}
+		intArrayValue, ok := convert_record_to_int_array(record.value)
+		valueAny = intArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.FLOAT_ARRAY]:
+		record.type = .FLOAT_ARRAY
+		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.FLOAT], record.value)
+		if !verifiedValue {
+			return false
+		}
+		fltArrayValue, ok := convert_record_to_float_array(record.value)
+		valueAny = fltArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.BOOLEAN_ARRAY]:
+		record.type = .BOOLEAN_ARRAY
+		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.BOOLEAN_ARRAY], record.value)
+		if !verifiedValue {
+			return false
+		}
+		boolArrayValue, ok := convert_record_to_bool_array(record.value)
+		valueAny = boolArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.STRING_ARRAY]:
+		record.type = .STRING_ARRAY
+		stringArrayValue, ok := convert_record_to_string_array(record.value)
+		valueAny = stringArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.CHAR_ARRAY]:
+		record.type = .CHAR_ARRAY
+		charArrayValue, ok := convert_record_to_char_array(record.value)
+		valueAny = charArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.DATE_ARRAY]:
+		record.type = .DATA_ARRAY
+		dateArrayValue, ok := convert_record_to_date_array(record.value)
+		valueAny = dateArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.TIME_ARRAY]:
+		record.type = .TIME_ARRAY
+		timeArrayValue, ok := convert_record_to_time_array(record.value)
+		valueAny = timeArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.DATETIME_ARRAY]:
+		record.type = .DATETIME_ARRAY
+		dateTimeArrayValue, ok := convert_record_to_datetime_array(record.value)
+		valueAny = dateTimeArrayValue
+		setValueOk = ok
+		break
+	case RecordDataTypesStrings[.UUID_ARRAY]:
+		record.type = .UUID_ARRAY
+		uuidArrayValue, ok := convert_record_to_uuid_array(record.value)
+		valueAny = uuidArrayValue
+		setValueOk = ok
+		break
 	}
 
-	if setValueOk != true {
-	errorLocation:= utils.get_caller_location()
-		valueTypeError := utils.new_err(
-			.INVALID_VALUE_FOR_EXPECTED_TYPE,
-			utils.get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
-			errorLocation
-		)
-		utils.throw_custom_err(
-			valueTypeError,
-			tprintf(
-				"%sInvalid value given. Expected a value of type: %s%s",
-				utils.BOLD_UNDERLINE,
-				record.type,
-				utils.RESET,
-			),
-		)
-		utils.log_err(
-			"User entered a value of a different type than what was expected.",
-			#procedure,
-		)
-
-		return false
+	if !setValueOk {
+	    make_new_err(.INVALID_VALUE_FOR_EXPECTED_TYPE, get_caller_location())
+		return success
 	}
 
 
 	updateSuccess := update_record_value(collection, cluster, record, valueAny)
 	if !updateSuccess{
+	    make_new_err(.CANNOT_UPDATE_RECORD, get_caller_location())
 	    return success
 	}else{
         success = true
 	}
-
-	delete(intArrayValue)
-	delete(fltArrayValue)
-	delete(boolArrayValue)
-	delete(stringArrayValue)
-	delete(dateArrayValue)
-	delete(timeArrayValue)
-	delete(dateTimeArrayValue)
-	delete(uuidArrayValue)
 
 	return success
 }
@@ -1154,6 +1139,7 @@ get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, 
     }
 
 	clusterBlocks := split(string(data), "},")
+	defer delete(clusterBlocks)
 
 	for c in clusterBlocks {
 		if contains(c, tprintf("cluster_name :identifier: %s", cluster.name)) {

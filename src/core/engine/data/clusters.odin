@@ -117,7 +117,7 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
     }
 
     //Check if the new name is already in use by a cluster in the passed in collection
-    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, newCluster)
+    clusterExistsInCollection := check_if_cluster_exsists_in_collection(collection, cluster)
     if clusterExistsInCollection {
         make_new_err(.CLUSTER_ALREADY_EXISTS, get_caller_location())
         return success
