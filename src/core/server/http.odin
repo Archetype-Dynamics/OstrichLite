@@ -8,7 +8,7 @@ parse_http_request :: proc(rawData:[]byte) -> (method: lib.HttpMethod, path: str
     using lib
 
     requestDataString:= string(rawData)
-    lines:= strings.split(requestDataString, "\r\n")
+    lines:= split(requestDataString, "\r\n")
 
     if len(lines) < 1 {
         return nil, "Http request empty", nil

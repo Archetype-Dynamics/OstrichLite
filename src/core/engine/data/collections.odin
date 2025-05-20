@@ -16,7 +16,7 @@ File Description:
 *********************************************************/
 
 //creates a new lib.Collection
-make_new_collection :: proc(name:string, type:lib.CollectionType) -> ^lib.Collection{
+make_new_collection :: proc(name:string, type: lib.CollectionType) -> ^lib.Collection{
     using lib
 
     collection := new(lib.Collection)
@@ -33,8 +33,9 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
     using lib
     success:= false
 
-    // Check if a collection of the passed in name
-   if  !check_if_collection_exists(collection){
+    // Check if a collection of the passed in name already exists
+   if check_if_collection_exists(collection){
+       make_new_err(.COLLECTION_ALREADY_EXISTS, get_caller_location())
        return success
    }
 
@@ -65,47 +66,59 @@ rename_collection :: proc(collection: ^lib.Collection, newName:string) -> bool {
     using lib
     success := false
 
-    // Check if a collection of the passed in name
-   if  !check_if_collection_exists(collection){
-       return success
-   }
+    //Check if a collection with the name that the user wants to rename does in fact check_if_collection_exists
+    if !check_if_collection_exists(collection){
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return success
+    }
+
+    //Now check if there is already a collection using the name "newName"
+    newCollection:= make_new_collection(newName, .STANDARD_PUBLIC)
+    defer free(newCollection)
+    if check_if_collection_exists(newCollection){
+        make_new_err(.COLLECTION_ALREADY_EXISTS, get_caller_location())
+        return success
+    }
 
 	collectionPath := concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
+
 	renameSuccess := os.rename(collectionPath, newName)
 	if renameSuccess{
 	   success = true
 	}
 
+	delete(newName)
 	return success
 }
 
 //reads and returns the body of the passed in collection
-fetch_collection :: proc(collection: ^lib.Collection) -> (bool,string) {
+fetch_collection :: proc(collection: ^lib.Collection) -> (string, bool) {
     using lib
+    using strings
 
     success:= false
 	fileStart := -1
 	startingPoint := "BTM@@@@@@@@@@@@@@@"
+	defer delete(startingPoint)
 
-    // Check if a collection of the passed in name
-   if  !check_if_collection_exists(collection){
-       return success, ""
-   }
+    if !check_if_collection_exists(collection){
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return "",success
+    }
 
 	collectionPath := concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
 
 	data, readSuccess := os.read_entire_file(collectionPath)
 	defer delete(data)
 
 	if !readSuccess {
 		make_new_err(.CANNOT_READ_FILE, get_caller_location())
-		return success, ""
+		return "",success
 	}
 
-	content := string(data)
-	defer delete(content
-	)
-	lines := strings.split(content, "\n")
+	lines := split(string(data), "\n")
 	defer delete(lines)
 
 	for i := 0; i < len(lines); i += 1 {
@@ -117,18 +130,26 @@ fetch_collection :: proc(collection: ^lib.Collection) -> (bool,string) {
 
 	if fileStart == -1 || fileStart >= len(lines) {
 	    //No data found
-		return success, ""
+		return "",success
+	}else{
+        success = true
 	}
 
 	collectionContent := strings.join(lines[fileStart:], "\n")
-	return true, strings.clone(collectionContent)
+	return  strings.clone(collectionContent), success
 }
 
 //deletes all data from a collection while retaining the metadat header
 purge_collection :: proc(collection: ^lib.Collection) -> bool {
 	using lib
+	using strings
 
 	success:= false
+
+	if !check_if_collection_exists(collection){
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return success
+    }
 
 	collectionPath := concat_standard_collection_name(collection.name)
 
@@ -146,23 +167,22 @@ purge_collection :: proc(collection: ^lib.Collection) -> bool {
 	// Find the end of the metadata header
 	headerEndIndex := strings.index(content, METADATA_END)
 	if headerEndIndex == -1 {
-	    errorLocation:= get_caller_location()
-	    log_err("Error: Error findining metadata header end index", errorLocation)
 	    return success
 	}
 
 	// Get the metadata header
 	headerEndIndex += len(METADATA_END) + 1
 	metadataHeader := content[:headerEndIndex]
+	defer delete(metadataHeader)
 
 	// Write back only the header
 	writeSuccess := write_to_file(collectionPath, transmute([]byte)metadataHeader, get_caller_location())
 	if !writeSuccess {
-	    errorLocation:= get_caller_location()
-		error:= new_err(.CANNOT_WRITE_TO_FILE, ErrorMessage[.CANNOT_WRITE_TO_FILE], errorLocation)
-		log_err("Error writing purged collection file", errorLocation)
+        make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
 		return success
-	}else{success = true}
+	}else{
+	    success = true
+	}
 
 	return success
 }
@@ -174,8 +194,12 @@ get_all_collection_names :: proc() -> [dynamic]string{
 
     collectionArray:= make([dynamic]string, 0)
     standardCollectionDir, openDirError :=os.open(STANDARD_COLLECTION_PATH)
-
     collections, readDirError:= os.read_dir(standardCollectionDir, 1)
+    if readDirError!=nil{
+        make_new_err(.CANNOT_READ_DIRECTORY, get_caller_location())
+        return collectionArray
+    }
+
     for collection in collections{
         append(&collectionArray, collection.name)
     }
@@ -238,6 +262,8 @@ validate_collection_name :: proc(collection: ^lib.Collection) -> bool {
 
 	//CHECK#3: check if the name has special chars
 	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+="
+	defer delete(invalidChars)
+
 	for c := 0; c < len(collection.name); c += 1 {
 		if strings.contains_any(collection.name, invalidChars) {
 			return false
