@@ -79,7 +79,7 @@ DEV_MODE :: #config(DEV_MODE, false)
 //Conditional file path constants thanks to the install debacle of Feb 2025 - Marshall
 //See more here: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/223
 //DO NOT TOUCH MF - Marshall
-when DEV_MODE == true {
+// when DEV_MODE == true {
 	ROOT_PATH :: "./"
 	TMP_PATH :: "./tmp/"
 	PRIVATE_PATH :: "./private/"
@@ -97,25 +97,25 @@ when DEV_MODE == true {
 	QUARANTINE_PATH :: "./public/quarantine/"
 	RESTART_SCRIPT_PATH :: "../scripts/restart.sh"
 	BUILD_SCRIPT_PATH :: "../scripts/local_build_run.sh"
-} else {
-	ROOT_PATH :: "./.ostrichdb/"
-	TMP_PATH :: "./.ostrichdb/tmp/"
-	PRIVATE_PATH :: "./.ostrichdb/private/"
-	PUBLIC_PATH :: "./.ostrichdb/public/"
-	STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
-	USERS_PATH :: "./private/users/"
-	BACKUP_PATH :: "./.ostrichdb/public/backups/"
-	SYSTEM_CONFIG_PATH :: "./.ostrichdb/private/config.ostrichdb"
-	ID_PATH :: "./.ostrichdb/private/ids.ostrichdb"
-	BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
-	LOG_DIR_PATH :: "./.ostrichdb/logs/"
-	RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
-	ERROR_LOG_PATH :: "./.ostrichdb/logs/errors.log"
-	SERVER_LOG_PATH :: "./.ostrichdb/logs/server_events.log"
-	QUARANTINE_PATH :: "./.ostrichdb/public/quarantine/"
-	RESTART_SCRIPT_PATH :: "./.ostrichdb/restart.sh"
-	BUILD_SCRIPT_PATH :: "./.ostrichdb/build_run.sh"
-}
+// } else {
+	// ROOT_PATH :: "./.ostrichdb/"
+	// TMP_PATH :: "./.ostrichdb/tmp/"
+	// PRIVATE_PATH :: "./.ostrichdb/private/"
+	// PUBLIC_PATH :: "./.ostrichdb/public/"
+	// STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
+	// USERS_PATH :: "./private/users/"
+	// BACKUP_PATH :: "./.ostrichdb/public/backups/"
+	// SYSTEM_CONFIG_PATH :: "./.ostrichdb/private/config.ostrichdb"
+	// ID_PATH :: "./.ostrichdb/private/ids.ostrichdb"
+	// BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
+	// LOG_DIR_PATH :: "./.ostrichdb/logs/"
+	// RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
+	// ERROR_LOG_PATH :: "./.ostrichdb/logs/errors.log"
+	// SERVER_LOG_PATH :: "./.ostrichdb/logs/server_events.log"
+	// QUARANTINE_PATH :: "./.ostrichdb/public/quarantine/"
+	// RESTART_SCRIPT_PATH :: "./.ostrichdb/restart.sh"
+	// BUILD_SCRIPT_PATH :: "./.ostrichdb/build_run.sh"
+// }
 
 //Non-changing PATH CONSTANTS
 FFVF_PATH :: "ost_file_format_version.tmp"
