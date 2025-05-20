@@ -95,11 +95,12 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
             if writeSuccess != 0{
                 make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
                 return success
+            }else{
+                success = true
             }
         }
     }
 
-    success = true
     os.close(collectionPath)
     return success
 }
@@ -107,6 +108,8 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
 //Renames a cluster to the passed in newName arg. The old name is passed in via ^cluster.name
 rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newName: string) ->bool{
     using lib
+    using fmt
+    using strings
 
     success:= false
 
@@ -162,6 +165,7 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
 
         if clusterNameEndIndex != -1 {
             clusterName:= strings.trim_space(clusterBlock[clusterNameStartIndex:][:clusterNameEndIndex])
+            defer delete(clusterName)
 
             //A cluster with the the oldName has been found, so lets rename it
             if clusterName == cluster.name{
@@ -192,13 +196,14 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
         success = true
     }
 
-
     return success
 }
 
 //Finds and deletes the cluster with the passed in cluster.name
 erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
     using lib
+    using fmt
+    using strings
 
     succces:= false
     collectionPath:= concat_standard_collection_name(collection.name)
@@ -281,7 +286,9 @@ erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
 
 //Finds and returns the passed in cluster and all its data as a whole, excluding the identifier typed records
 fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (string, bool){
- using lib
+    using lib
+    using fmt
+    using strings
 
  success:= false
  clusterAsString:string = ---
@@ -327,6 +334,9 @@ fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (stri
 //Deletes all data within a cluster excluding the name, id all while retaining the clusters structure
 purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool{
     using lib
+    using fmt
+    using strings
+
     success:= false
 
     collectionPath:= concat_standard_collection_name(collection.name)
@@ -405,6 +415,8 @@ purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool
 //Read over the passed in collection and try to find the a cluster that matches the name of the passed in cluster arg
 check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) ->bool{
     using lib
+    using fmt
+    using strings
 
     success:= false
 
@@ -442,13 +454,14 @@ check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, clust
     return success
 }
 
-
 //Returns 2 dynamic arrays:
 //1. ALL cluster ids in a collectionas i64
 //2. ALL cluster ids in a collection as strings
 //remember to delete the returned values in the calling procedure
 get_all_cluster_ids_in_collection :: proc(collection: ^lib.Collection) -> ([dynamic]i64, [dynamic]string) {
-	using lib
+    using lib
+    using fmt
+    using strings
 
 	//the following dynamic arrays DO NOT get deleted at the end of the procedure. They are deleted in the calling procedure
 	IDs := make([dynamic]i64)
@@ -486,7 +499,9 @@ get_all_cluster_ids_in_collection :: proc(collection: ^lib.Collection) -> ([dyna
 //Returns a dynamic array of all cluster names within the passed in collection
 //Remember to delete return value in calling procedure
 get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dynamic]string) {
-	using lib
+    using lib
+    using fmt
+    using strings
 
     clusterNames := make([dynamic]string)
 
@@ -517,6 +532,8 @@ get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dy
 // Reads over the passed in collection for the passed in cluster, then returns the id of that cluster
 get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluster) -> (success:bool,clusterID:i64){
     using lib
+    using fmt
+    using strings
 
     clusterID = -1
     success=false
@@ -564,6 +581,9 @@ get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluste
 //Reads over the passed in collection for the passed in cluster ID. If found return the name of the cluster
 get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (success: bool, clusterName:string){
     using lib
+    using fmt
+    using strings
+
     clusterName = ""
     success = false
 
@@ -614,6 +634,8 @@ get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (s
 //7. Whitespace characters
 get_cluster_size ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> (bool, int){
     using lib
+    using fmt
+    using strings
 
     success := false
     size := 0

@@ -1354,7 +1354,7 @@ check_if_record_exists_in_cluster :: proc(collection:^lib.Collection, cluster:^l
 
 
 // helper used to parse records into 3 parts, the name, type and value. Appends to a struct then returns
-// //rememeber to delete the return values in the calling procedure
+// remember to delete the return values in the calling procedure
 parse_record :: proc(recordAsString: string) -> lib.Record {
     using lib
     using strings
