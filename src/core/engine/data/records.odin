@@ -166,10 +166,7 @@ rename_reocord :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, oldRe
 	    return success
 	}
 
-	content := string(data)
-	defer delete(content)
-
-	clusterBlocks := split(content, "},")
+	clusterBlocks := split(string(data), "},")
 	defer delete(clusterBlocks)
 
 	newContent := make([dynamic]u8)
@@ -262,10 +259,7 @@ update_record_data_type :: proc(collection: ^lib.Collection, cluster: ^lib.Clust
 		return success
 	}
 
-	content := string(data)
-	defer delete(content)
-
-	lines := split(content, "\n")
+	lines := split(string(data), "\n")
 	defer delete(lines)
 
 	newLines := make([dynamic]string)
@@ -726,10 +720,7 @@ get_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, rec
 		return "", success
 	}
 
-	content := string(data)
-	defer delete(content)
-
-	lines := split(content, "\n")
+	lines := split(string(data), "\n")
 	defer delete(lines)
 
 	clusterStart := -1
@@ -814,7 +805,7 @@ verify_record_data_type_is_valid :: proc(record: ^lib.Record) -> string {
 			}
 		}
 	}
-	return clone(RecordDataTypesAsString[record.type])
+	return clone(RecordDataTypesStrings[record.type])
 }
 
 
@@ -853,10 +844,7 @@ get_record_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		return "", success
 	}
 
-	content := string(data)
-	defer delete(content)
-
-	clusters := split(content, "},")
+	clusters := split(string(data), "},")
 	defer delete(clusters)
 
 	for c in clusters {
@@ -940,27 +928,27 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 	ok: bool = false
 	setValueOk := false
 	switch (recordType) {
-	case RecordDataTypesAsString[.INTEGER]:
+	case RecordDataTypesStrings[.INTEGER]:
 		record.type = .INTEGER
 		valueAny, ok = CONVERT_RECORD_TO_INT(rValue)
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.FLOAT]:
+	case RecordDataTypesStrings[.FLOAT]:
 		record.type = .FLOAT
 		valueAny, ok = CONVERT_RECORD_TO_FLOAT(rValue)
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.BOOLEAN]:
+	case RecordDataTypesStrings[.BOOLEAN]:
 		record.type = .BOOLEAN
 		valueAny, ok = CONVERT_RECORD_TO_BOOL(rValue)
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.STRING]:
+	case RecordDataTypesStrings[.STRING]:
 		record.type = .STRING
 		valueAny = append_qoutations(rValue)
 		setValueOk = true
 		break
-	case RecordDataTypesAsString[.CHAR]:
+	case RecordDataTypesStrings[.CHAR]:
 		record.type = .CHAR
 		if len(rValue) != 1 {
 			setValueOk = false
@@ -969,9 +957,9 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 			setValueOk = true
 		}
 		break
-	case RecordDataTypesAsString[.INTEGER_ARRAY]:
+	case RecordDataTypesStrings[.INTEGER_ARRAY]:
 		record.type = .INTEGER_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesAsString[.INTEGER_ARRAY], rValue)
+		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.INTEGER_ARRAY], rValue)
 		if !verifiedValue {
 			return false
 		}
@@ -979,9 +967,9 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		valueAny = intArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.FLOAT_ARRAY]:
+	case RecordDataTypesStrings[.FLOAT_ARRAY]:
 		record.type = .FLOAT_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesAsString[.FLOAT], rValue)
+		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.FLOAT], rValue)
 		if !verifiedValue {
 			return false
 		}
@@ -989,9 +977,9 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		valueAny = fltArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.BOOLEAN_ARRAY]:
+	case RecordDataTypesStrings[.BOOLEAN_ARRAY]:
 		record.type = .BOOLEAN_ARRAY
-		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesAsString[.BOOLEAN_ARRAY], rValue)
+		verifiedValue := VERIFY_ARRAY_VALUES(RecordDataTypesStrings[.BOOLEAN_ARRAY], rValue)
 		if !verifiedValue {
 			return false
 		}
@@ -999,37 +987,37 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		valueAny = boolArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.STRING_ARRAY]:
+	case RecordDataTypesStrings[.STRING_ARRAY]:
 		record.type = .STRING_ARRAY
 		stringArrayValue, ok := CONVERT_RECORD_TO_STRING_ARRAY(rValue)
 		valueAny = stringArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.CHAR_ARRAY]:
+	case RecordDataTypesStrings[.CHAR_ARRAY]:
 		record.type = .CHAR_ARRAY
 		charArrayValue, ok := CONVERT_RECORD_TO_CHAR_ARRAY(rValue)
 		valueAny = charArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.DATE_ARRAY]:
+	case RecordDataTypesStrings[.DATE_ARRAY]:
 		record.type = .DATA_ARRAY
 		dateArrayValue, ok := CONVERT_RECORD_TO_DATE_ARRAY(rValue)
 		valueAny = dateArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.TIME_ARRAY]:
+	case RecordDataTypesStrings[.TIME_ARRAY]:
 		record.type = .TIME_ARRAY
 		timeArrayValue, ok := CONVERT_RECORD_TO_TIME_ARRAY(rValue)
 		valueAny = timeArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.DATETIME_ARRAY]:
+	case RecordDataTypesStrings[.DATETIME_ARRAY]:
 		record.type = .DATETIME_ARRAY
 		dateTimeArrayValue, ok := CONVERT_RECORD_TO_DATETIME_ARRAY(rValue)
 		valueAny = dateTimeArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.DATE]:
+	case RecordDataTypesStrings[.DATE]:
 		record.type = .DATE
 		date, ok := CONVERT_RECORD_TO_DATE(rValue)
 		if ok {
@@ -1037,7 +1025,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 			setValueOk = ok
 		}
 		break
-	case RecordDataTypesAsString[.TIME]:
+	case RecordDataTypesStrings[.TIME]:
 		record.type = .TIME
 		time, ok := CONVERT_RECORD_TO_TIME(rValue)
 		if ok {
@@ -1045,7 +1033,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 			setValueOk = ok
 		}
 		break
-	case RecordDataTypesAsString[.DATETIME]:
+	case RecordDataTypesStrings[.DATETIME]:
 		record.type = .DATETIME
 		dateTime, ok := CONVERT_RECORD_TO_DATETIME(rValue)
 		if ok {
@@ -1053,7 +1041,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 			setValueOk = ok
 		}
 		break
-	case RecordDataTypesAsString[.UUID]:
+	case RecordDataTypesStrings[.UUID]:
 		record.type = .UUID
 		uuid, ok := CONVERT_RECORD_TO_UUID(rValue)
 		if ok {
@@ -1061,13 +1049,13 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 			setValueOk = ok
 		}
 		break
-	case RecordDataTypesAsString[.UUID_ARRAY]:
+	case RecordDataTypesStrings[.UUID_ARRAY]:
 		record.type = .UUID_ARRAY
 		uuidArrayValue, ok := CONVERT_RECORD_TO_UUID_ARRAY(rValue)
 		valueAny = uuidArrayValue
 		setValueOk = ok
 		break
-	case RecordDataTypesAsString[.NULL]:
+	case RecordDataTypesStrings[.NULL]:
 		record.type = .NULL
 		valueAny = .NULL
 		setValueOk = true
@@ -1152,20 +1140,21 @@ get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, 
         return -4, success
     }
 
-
-	clusterBlocks := strings.split(string(data), "},")
+	clusterBlocks := split(string(data), "},")
 
 	for c in clusterBlocks {
-		if strings.contains(c, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
-			lines := strings.split(c, "\n")
+		if contains(c, tprintf("cluster_name :identifier: %s", cluster.name)) {
+			lines := split(c, "\n")
+			defer delete(lines)
 			for line in lines {
-				parts := strings.split(line, ":")
-				if strings.has_prefix(line, fmt.tprintf("\t%s", record.name)) {
+				parts := split(line, ":")
+				defer delete(parts)
+				if has_prefix(line, tprintf("\t%s", record.name)) {
 					//added the \t to the prefix because all records are indented in the plain text collection file - Marshall Burns Jan 2025
-					parts := strings.split(line, ":")
+					parts := split(line, ":")
 					if len(parts) == 3 {
-						record_value := strings.trim_space(strings.join(parts[2:], ":"))
-						return len(record_value), true
+						recordValue := trim_space(join(parts[2:], ":"))
+						return len(recordValue), true
 					}
 				}
 			}
@@ -1176,9 +1165,143 @@ get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, 
 
 
 
-//TODO: need to add the following helper procs:
-//GET_RECORD_COUNT_WITHIN_CLUSTER
-//GET_RECORD_COUNT_WITHIN_COLLECTION
+//returns the number of records within the passed in cluster
+get_record_count_within_cluster :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
+    using lib
+    using fmt
+    using strings
+
+    success:= false
+    recordCount:= 0
+
+    collectionExists:= check_if_collection_exists(collection)
+    if !collectionExists{
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return -1, success
+    }
+
+    clusterExists:= check_if_cluster_exsists_in_collection(collection, cluster)
+    if !clusterExists{
+        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION, get_caller_location())
+        return -2, success
+    }
+
+    recordExists:= check_if_record_exists_in_cluster(collection, cluster, record)
+    if !recordExists{
+        make_new_err(.RECORD_DOES_NOT_EXIST_IN_CLUSTER, get_caller_location())
+        return -3, success
+    }
+
+    collectionPath:= concat_standard_collection_name(collection.name)
+    data, readSuccess:= read_file(collectionPath, get_caller_location())
+    defer delete(data)
+    if !readSuccess{
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+        return -4, success
+    }
+
+	clusterBlocks := split(string(data), "},")
+	defer delete(clusterBlocks)
+
+	for c in clusterBlocks {
+		if contains(c, tprintf("cluster_name :identifier: %s", cluster.name)) {
+			lines := split(c, "\n")
+			defer delete(lines)
+
+			for line in lines {
+				trimmedLine := trim_space(line)
+				if len(trimmedLine) > 0 &&
+				   !has_prefix(trimmedLine, "cluster_name") &&
+				   !has_prefix(trimmedLine, "cluster_id") &&
+				   !contains(trimmedLine, "#") &&
+				   !contains(trimmedLine, METADATA_START) &&
+				   !contains(trimmedLine, METADATA_END) &&
+				   contains(trimmedLine, ":") {
+					recordCount += 1
+					success = true
+				}
+			}
+		}
+	}
+
+	return recordCount, success
+}
+
+//reads over the passed in collection file and returns the number of records in that collection
+//returns the number of record within an entire collection
+get_record_count_within_collection :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
+    using lib
+    using fmt
+    using strings
+
+    success:= false
+    recordCount:= 0
+
+    collectionExists:= check_if_collection_exists(collection)
+    if !collectionExists{
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return -1, success
+    }
+
+    clusterExists:= check_if_cluster_exsists_in_collection(collection, cluster)
+    if !clusterExists{
+        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION, get_caller_location())
+        return -2, success
+    }
+
+    recordExists:= check_if_record_exists_in_cluster(collection, cluster, record)
+    if !recordExists{
+        make_new_err(.RECORD_DOES_NOT_EXIST_IN_CLUSTER, get_caller_location())
+        return -3, success
+    }
+
+    collectionPath:= concat_standard_collection_name(collection.name)
+    data, readSuccess:= read_file(collectionPath, get_caller_location())
+    defer delete(data)
+    if !readSuccess{
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+        return -4, success
+    }
+
+	content := string(data)
+	defer delete(content)
+
+	// Skip metadata section
+	if metadataEnd := index(content,METADATA_END);
+	   metadataEnd >= 0 {
+		content = content[metadataEnd + len(METADATA_END):]
+	}
+
+	clusterBlocks := split(content, "},")
+	defer delete(clusterBlocks)
+
+
+	for c in clusterBlocks {
+		if !contains(c, "cluster_name :identifier:") {
+			continue // Skip non-cluster content
+		}
+		lines := split(c, "\n")
+		defer delete(lines)
+
+		for line in lines {
+			trimmedLine := trim_space(line)
+			if len(trimmedLine) > 0 &&
+			   !has_prefix(trimmedLine, "cluster_name") &&
+			   !has_prefix(trimmedLine, "cluster_id") &&
+			   contains(trimmedLine, ":") &&
+			   !contains(trimmedLine, METADATA_START) &&
+			   !contains(trimmedLine, METADATA_END) {
+				recordCount += 1
+				success = true
+			}
+		}
+	}
+
+	return recordCount,  success
+}
+
+
+
 
 
 //Reads over the passed in collection and a specific cluster for a record by name, returns true if found
@@ -1246,18 +1369,13 @@ parse_record :: proc(recordAsString: string) -> lib.Record {
 	recordType := trim_space(recordParts[1])
 	recordValue := trim_space(recordParts[2])
 
-	// Find the enum value by looking up the string in the RecordDataTypesAsString map
-	for  dataTypeStringValue, dataTypeToken in RecordDataTypesAsString {
+	// Find the enum value by looking up the string in the RecordDataTypesStrings map
+	for  dataTypeStringValue, dataTypeToken in RecordDataTypesStrings {
 		if dataTypeStringValue == recordType {
 			newRecordDataType= dataTypeToken
 			break
 		}
 	}
 
-	return Record {
-		name = clone(recordName),
-		type = newRecordDataType,
-		value = clone(recordValue),
-	}
-
+	return Record { name = clone(recordName), type = newRecordDataType, value = clone(recordValue)}
 }

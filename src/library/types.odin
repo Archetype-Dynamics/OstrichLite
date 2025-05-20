@@ -90,7 +90,7 @@ RecordDataTypes :: enum {
 	UUID_ARRAY,
 }
 
-RecordDataTypesAsString := [RecordDataTypes]string {
+RecordDataTypesStrings := [RecordDataTypes]string {
     .INVALID = "INVALID",
     .NULL = "NULL" ,
     .CHAR = "CHAR" ,
