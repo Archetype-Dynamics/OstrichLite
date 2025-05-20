@@ -25,48 +25,48 @@ parse_array :: proc(arrayAsString:string) -> []string {
 }
 
 //verifies that the members of the passed in array are valid based on the type of array they are in
-VERIFY_ARRAY_VALUES :: proc(record: ^lib.Record, strArray: string) -> bool {
+verify_array_values :: proc(record: ^lib.Record) -> bool {
 	using lib
 	using strconv
 
 	verified := false
 	//retrieve the record type
-	arrayValues := parse_array(strArray)
+	parsedArray := parse_array(record.value)
 
 	#partial switch (record.type) {
 	case .INTEGER_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_int(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_int(element)
 			verified = parseSuccess
 		}
 		return verified
 	case .FLOAT_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_f64(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_f64(element)
 			verified = parseSuccess
 		}
 		return verified
 	case .BOOLEAN_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_bool(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_bool(element)
 			verified = parseSuccess
 		}
 		return verified
 	case .DATE_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_date(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_date(element)
 			verified = parseSuccess
 		}
 		return verified
 	case .TIME_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_time(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_time(element)
 			verified = parseSuccess
 		}
 		return verified
 	case .DATETIME_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_datetime(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_datetime(element)
 			verified = parseSuccess
 		}
 		return verified
@@ -74,8 +74,8 @@ VERIFY_ARRAY_VALUES :: proc(record: ^lib.Record, strArray: string) -> bool {
 		verified = true
 		return verified
 	case .UUID_ARRAY:
-		for i in arrayValues {
-			_, parseSuccess := parse_uuid(i)
+		for element in parsedArray {
+			_, parseSuccess := parse_uuid(element)
 			verified = parseSuccess
 		}
 		return verified
