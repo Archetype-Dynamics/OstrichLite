@@ -168,7 +168,7 @@ purge_collection :: proc(collection: ^lib.Collection) -> bool {
 }
 
 //Reads over all standard collections, appends their names and returns them
-//Dont forget to free the memery in the calling procedure
+//Dont forget to free the memory in the calling procedure
 get_all_collection_names :: proc() -> [dynamic]string{
     using lib
 
