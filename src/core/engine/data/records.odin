@@ -1119,9 +1119,64 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 }
 
 
+get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
+    using lib
+    using fmt
+    using strings
+
+    success:= false
+
+    collectionExists:= check_if_collection_exists(collection)
+    if !collectionExists{
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return -1, success
+    }
+
+    clusterExists:= check_if_cluster_exsists_in_collection(collection, cluster)
+    if !clusterExists{
+        make_new_err(.CLUSTER_DOES_NOT_EXIST_IN_COLLECTION, get_caller_location())
+        return -2, success
+    }
+
+    recordExists:= check_if_record_exists_in_cluster(collection, cluster, record)
+    if !recordExists{
+        make_new_err(.RECORD_DOES_NOT_EXIST_IN_CLUSTER, get_caller_location())
+        return -3, success
+    }
+
+    collectionPath:= concat_standard_collection_name(collection.name)
+    data, readSuccess:= read_file(collectionPath, get_caller_location())
+    defer delete(data)
+    if !readSuccess{
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+        return -4, success
+    }
+
+
+	clusterBlocks := strings.split(string(data), "},")
+
+	for c in clusterBlocks {
+		if strings.contains(c, fmt.tprintf("cluster_name :identifier: %s", cluster.name)) {
+			lines := strings.split(c, "\n")
+			for line in lines {
+				parts := strings.split(line, ":")
+				if strings.has_prefix(line, fmt.tprintf("\t%s", record.name)) {
+					//added the \t to the prefix because all records are indented in the plain text collection file - Marshall Burns Jan 2025
+					parts := strings.split(line, ":")
+					if len(parts) == 3 {
+						record_value := strings.trim_space(strings.join(parts[2:], ":"))
+						return len(record_value), true
+					}
+				}
+			}
+		}
+	}
+	return 0, false
+   }
+
+
 
 //TODO: need to add the following helper procs:
-//GET_RECORD_SIZE
 //GET_RECORD_COUNT_WITHIN_CLUSTER
 //GET_RECORD_COUNT_WITHIN_COLLECTION
 
