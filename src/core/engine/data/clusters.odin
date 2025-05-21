@@ -19,6 +19,7 @@ File Description:
 
 //Creates a new lib.Cluster, assigns its members with the passed i args
 //Returns a pointer to the new lib.Cluster
+@(require_results)
 make_new_cluster :: proc(collection: ^lib.Collection, clusterName: string) -> ^lib.Cluster {
 	using lib
 
@@ -730,7 +731,7 @@ get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (c
 //5. Tab characters
 //6. Newline characters
 //7. Whitespace characters
-@(require_results)
+@(cold, require_results)
 get_cluster_size ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> (int, bool){
     using lib
     using fmt

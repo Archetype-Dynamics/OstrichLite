@@ -16,6 +16,7 @@ File Description:
 *********************************************************/
 
 // Creates a new lib.cluster, assigns its members with the passed in args, returns pointer to new lib.Record
+@(require_results)
 make_new_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, recordName:string) -> ^lib.Record{
     using lib
     using fmt
@@ -32,6 +33,7 @@ make_new_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 }
 
 //Appends the physcal recode line to the passed in cluster within the passed in collection
+@(require_results)
 create_record_within_cluster :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> bool{
     using lib
     using fmt
@@ -123,6 +125,7 @@ create_record_within_cluster :: proc(collection: ^lib.Collection, cluster: ^lib.
 
 
 //Reads over the passed in collection and the passed in cluster for the record. renames the record.name with the newName arg
+@(require_results)
 rename_reocord :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, oldRecord: ^lib.Record, newName:string) -> bool {
     using lib
     using fmt
@@ -227,6 +230,7 @@ rename_reocord :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, oldRe
 	return success
 }
 //finds a the passed in record, and physically updates its data type. keeps its value which will eventually need to be changed
+@(require_results)
 update_record_data_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record, newType: string) -> bool {
     using lib
     using fmt
@@ -319,6 +323,7 @@ update_record_data_type :: proc(collection: ^lib.Collection, cluster: ^lib.Clust
 
 
 //Used to replace a records current value with the passed in newValue
+@(require_results)
 update_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record, newValue:any) -> bool{
     using lib
     using fmt
@@ -413,6 +418,7 @@ update_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, 
 }
 
 //deletes the passed in records value while retaining its name and data type
+@(require_results)
 purge_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record)->bool{
     using lib
     using fmt
@@ -511,6 +517,7 @@ purge_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record:
 }
 
 //deletes a record from a cluster
+@(require_results)
 erase_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> bool {
 	using lib
 	using fmt
@@ -630,6 +637,7 @@ erase_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record:
 
 //Reads over the passed in collection and cluster looking for the passed in record,
 //assigns the records name, type, and value to a new lib.Record and returns it
+@(require_results)
 fetch_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> (lib.Record, bool){
     using lib
     using fmt
@@ -694,6 +702,7 @@ fetch_record :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record:
 
 //find and return the passed in records value as a string
 //Remember to delete() the the return value from the calling procedure
+@(require_results)
 get_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) ->(string, bool) {
     using lib
     using fmt
@@ -772,6 +781,7 @@ get_record_value :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, rec
 //Used to ensure that the passed in records type is valid and if its shorthand assign the value as the longhand
 //e.g if INT then assign INTEGER. Returns the type
 //Remember to delete() the return value in the calling procedure
+@(require_results)
 verify_record_data_type_is_valid :: proc(record: ^lib.Record) -> string {
     using lib
     using fmt
@@ -817,6 +827,7 @@ verify_record_data_type_is_valid :: proc(record: ^lib.Record) -> string {
 
 
 //Returns the data type of the passed in record
+@(require_results)
 get_record_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> ( string, bool) {
     using lib
     using fmt
@@ -880,7 +891,7 @@ get_record_type :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 }
 
 
-
+@(require_results)
 set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, record: ^lib.Record) -> bool {
     using lib
     using fmt
@@ -1102,6 +1113,8 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 	return success
 }
 
+
+@(cold, require_results)
 get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
     using lib
     using fmt
@@ -1164,6 +1177,7 @@ get_record_value_size :: proc(collection:^lib.Collection, cluster:^lib.Cluster, 
 
 
 //returns the number of records within the passed in cluster
+@(cold, require_results)
 get_record_count_within_cluster :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
     using lib
     using fmt
@@ -1229,6 +1243,7 @@ get_record_count_within_cluster :: proc(collection:^lib.Collection, cluster:^lib
 
 //reads over the passed in collection file and returns the number of records in that collection
 //returns the number of record within an entire collection
+@(cold, require_results)
 get_record_count_within_collection :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> (int, bool) {
     using lib
     using fmt
@@ -1307,6 +1322,7 @@ get_record_count_within_collection :: proc(collection:^lib.Collection, cluster:^
 
 
 //Reads over the passed in collection and a specific cluster for a record by name, returns true if found
+@(require_results)
 check_if_record_exists_in_cluster :: proc(collection:^lib.Collection, cluster:^lib.Cluster, record: ^lib.Record) -> bool {
 	using lib
 	using fmt
@@ -1355,6 +1371,7 @@ check_if_record_exists_in_cluster :: proc(collection:^lib.Collection, cluster:^l
 
 // helper used to parse records into 3 parts, the name, type and value. Appends to a struct then returns
 // remember to delete the return values in the calling procedure
+@(require_results)
 parse_record :: proc(recordAsString: string) -> lib.Record {
     using lib
     using strings

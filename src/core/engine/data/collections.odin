@@ -16,6 +16,7 @@ File Description:
 *********************************************************/
 
 //creates a new lib.Collection
+@(require_results)
 make_new_collection :: proc(name:string, type: lib.CollectionType) -> ^lib.Collection{
     using lib
 
@@ -29,6 +30,7 @@ make_new_collection :: proc(name:string, type: lib.CollectionType) -> ^lib.Colle
 }
 
 //Creates a standard collection file
+@(require_results)
 create_collection_file :: proc(collection: ^lib.Collection) -> bool {
     using lib
     success:= false
@@ -67,6 +69,7 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
 	return success
 }
 
+@(require_results)
 erase_collection ::proc(collection: ^lib.Collection) -> bool{
    	using lib
 
@@ -92,6 +95,7 @@ erase_collection ::proc(collection: ^lib.Collection) -> bool{
 
 
 //Renames the passed in collection.name to the new name
+@(require_results)
 rename_collection :: proc(collection: ^lib.Collection, newName:string) -> bool {
     using lib
     success := false
@@ -123,6 +127,7 @@ rename_collection :: proc(collection: ^lib.Collection, newName:string) -> bool {
 }
 
 //reads and returns the body of the passed in collection
+@(require_results)
 fetch_collection :: proc(collection: ^lib.Collection) -> (string, bool) {
     using lib
     using strings
@@ -170,6 +175,7 @@ fetch_collection :: proc(collection: ^lib.Collection) -> (string, bool) {
 }
 
 //deletes all data from a collection while retaining the metadat header
+@(require_results)
 purge_collection :: proc(collection: ^lib.Collection) -> bool {
 	using lib
 	using strings
@@ -219,6 +225,7 @@ purge_collection :: proc(collection: ^lib.Collection) -> bool {
 
 //Reads over all standard collections, appends their names and returns them
 //Dont forget to free the memory in the calling procedure
+@(require_results)
 get_all_collection_names :: proc() -> [dynamic]string{
     using lib
 
@@ -238,6 +245,7 @@ get_all_collection_names :: proc() -> [dynamic]string{
 }
 
 //See if the passed in collection exists in the path
+@(require_results)
 check_if_collection_exists :: proc(collection: ^lib.Collection) -> bool {
     using lib
 
@@ -256,6 +264,7 @@ check_if_collection_exists :: proc(collection: ^lib.Collection) -> bool {
 }
 
 //gets the number of  collections
+@(require_results)
 get_collection_count :: proc() -> int {
 	using lib
 
@@ -275,6 +284,7 @@ get_collection_count :: proc() -> int {
 }
 
 //Checks if the passed in collection.name is valid
+@(require_results)
 validate_collection_name :: proc(collection: ^lib.Collection) -> bool {
 	using lib
 
