@@ -52,19 +52,6 @@ get_file_info :: proc(file: string) -> os.File_Info {
 	return info
 }
 
-//used to help with error handling.
-get_line_number :: proc(line: int) -> string {
-	if line < 1 {
-		return "unknown"
-	}
-	return fmt.tprintf("%d", line)
-}
-
-//used to help with error handling.
-show_source_file :: proc(file: string) -> string {
-	return fmt.tprintln("Source File: %s%s%s", BOLD, file, RESET)
-}
-
 show_server_kill_msg :: proc() {
 	fmt.printfln(
 		"Enter %s'kill'%s or %s'exit'%s to stop the server\n",

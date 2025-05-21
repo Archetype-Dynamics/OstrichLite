@@ -44,7 +44,11 @@ create_log_files :: proc() -> int {
 }
 
 //###############################|RUNTIME LOGGING|############################################
+@(cold)
 log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
+    using fmt
+    using strings
+
 	date, h, m, s := get_date_and_time()
 	defer delete(date)
 	defer delete(h)
@@ -52,12 +56,15 @@ log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
 	defer delete(s)
 
 
-	runtimeEventName:= fmt.tprintf("Event Name: %s\n", eventName)
-	runtimeEventDesc:= fmt.tprintf("Event Description: %s\n", eventDesc)
+	runtimeEventName:= tprintf("Event Name: %s\n", eventName)
+	runtimeEventDesc:= tprintf("Event Description: %s\n", eventDesc)
+	defer delete(runtimeEventName)
+	defer delete(runtimeEventDesc)
 
-	runtimeLogBlock:= strings.concatenate([]string{runtimeEventName, runtimeEventDesc})
+	runtimeLogBlock:= concatenate([]string{runtimeEventName, runtimeEventDesc})
+	defer delete(runtimeLogBlock)
 
-	fullLogMessage := strings.concatenate(
+	fullLogMessage := concatenate(
 		[]string {
 			runtimeLogBlock,
 			"Event Logged: ",
@@ -72,6 +79,7 @@ log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
 			"---------------------------------------------\n",
 		},
 	)
+	defer delete(fullLogMessage)
 
 	runtimeLogData := transmute([]u8)fullLogMessage
 	defer delete(runtimeLogData)
@@ -99,20 +107,24 @@ log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
 
 //###############################|ERROR LOGGING|############################################
 log_err :: proc(message: string, location: SourceCodeLocation) -> int {
+    using fmt
+    using strings
+
 	date, h, m, s := get_date_and_time()
 	defer delete(date)
 	defer delete(h)
 	defer delete(m)
 	defer delete(s)
 
-	errMessageString:= fmt.tprintf("Error: %s\n", message)
-	errSourceCodeFile:= fmt.tprintf("Source Code File: %s\n", location.file_path)
-	errProcedure:= fmt.tprintf("Procedure: %s\n", location.procedure)
-	errLine:= fmt.tprintf("Line: #%d \n", location.line)
+	errMessageString:= tprintf("Error: %s\n", message)
+	errSourceCodeFile:= tprintf("Source Code File: %s\n", location.file_path)
+	errProcedure:= tprintf("Procedure: %s\n", location.procedure)
+	errLine:= tprintf("Line: #%d \n", location.line)
 
-	errorLogBlock := strings.concatenate([]string{errMessageString, errSourceCodeFile, errProcedure, errLine})
+	errorLogBlock := concatenate([]string{errMessageString, errSourceCodeFile, errProcedure, errLine})
+	defer delete(errorLogBlock)
 
-	fullLog := strings.concatenate(
+	fullLog := concatenate(
 		[]string {
 			errorLogBlock,
 			"Error Occured: ",
@@ -131,16 +143,23 @@ log_err :: proc(message: string, location: SourceCodeLocation) -> int {
 	errLogData := transmute([]u8)fullLog
 	defer delete(errLogData)
 
+
 	errorFile, openSuccess := os.open(ERROR_LOG_PATH, os.O_APPEND | os.O_RDWR, 0o666)
 	if openSuccess != 0 {
 		return -1
 	}
 
-
 	_ , writeSuccess := os.write(errorFile, errLogData)
 	if writeSuccess != 0 {
 		return -2
 	}
+
+
+	delete(errMessageString)
+	delete(errSourceCodeFile)
+	delete(errProcedure)
+	delete(errLine)
+	delete(fullLog)
 
 	defer os.close(errorFile)
 	return 0

@@ -32,9 +32,7 @@ write_to_file :: proc(filepath: string, data: []byte, callingProcedure: SourceCo
 
 //helper that concats a collections name to the standard collection path.
 concat_standard_collection_name :: proc(colFileName: string) -> string {
-	return strings.clone(
-		fmt.tprintf("%s%s%s", STANDARD_COLLECTION_PATH, colFileName, OST_EXT),
-	)
+	return strings.clone(fmt.tprintf("%s%s%s", STANDARD_COLLECTION_PATH, colFileName, OST_EXT))
 }
 
 //helper to get users input from the command line
@@ -57,6 +55,7 @@ get_input :: proc(isPassword: bool) -> string {
 
 
 //gets the current date in GMT
+@(require_results)
 get_date_and_time :: proc() -> (gmtDate: string, hour: string, minute: string, second: string) {
 	mBuf: [8]byte
 	dBuf: [8]byte
@@ -131,8 +130,10 @@ get_date_and_time :: proc() -> (gmtDate: string, hour: string, minute: string, s
 	}
 
 	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
-	return strings.clone(Date), strings.clone(Hour), strings.clone(Minute), strings.clone(Second)
+	defer delete(Date)
 
+
+	return strings.clone(Date), strings.clone(Hour), strings.clone(Minute), strings.clone(Second)
 }
 
 
@@ -169,11 +170,9 @@ trim_qoutations :: proc(value: string) -> string {
 string_is_int :: proc(value: string) -> bool {
 	val, ok := strconv.parse_int(value)
 	return ok
-
 }
-
-
 //helper used to strip array brackets from a string, used in internal_conversion.odin
+@(cold)
 strip_array_brackets :: proc(value: string) -> string {
 	value := strings.trim_prefix(value, "[")
 	value = strings.trim_suffix(value, "]")

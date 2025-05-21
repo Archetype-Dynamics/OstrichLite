@@ -90,6 +90,7 @@ RecordDataTypes :: enum {
 	UUID_ARRAY,
 }
 
+@(rodata)
 RecordDataTypesStrings := [RecordDataTypes]string {
     .INVALID = "INVALID",
     .NULL = "NULL" ,
@@ -121,36 +122,6 @@ RecordDataTypesStrings := [RecordDataTypes]string {
     .UUID_ARRAY = "UUID_ARRAY" ,
 }
 
-VALID_RECORD_TYPES: []string : {
-	"CHAR",
-	"STR",
-	"INT",
-	"FLT",
-	"BOOL",
-	"STRING",
-	"INTEGER",
-	"FLOAT",
-	"BOOLEAN",
-	"DATE",
-	"TIME",
-	"DATETIME",
-	"UUID",
-	"NULL",
-	"[]CHAR",
-	"[]STR",
-	"[]STRING",
-	"[]INT",
-	"[]INTEGER",
-	"[]FLT",
-	"[]FLOAT",
-	"[]BOOL",
-	"[]BOOLEAN",
-	"[]CHAR",
-	"[]DATE",
-	"[]TIME",
-	"[]DATETIME",
-	"[]UUID",
-}
 //DATA RELATED TYPES END
 
 

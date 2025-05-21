@@ -165,14 +165,11 @@ get_caller_location :: proc(location:= #caller_location) -> SourceCodeLocation {
     return location
 }
 
-new_err :: proc(type: ErrorType, message: string, location: SourceCodeLocation) -> Error {
-	return Error{type = type, message = message, location = location}
-}
 
-throw_err :: proc(err: ^Error) -> int {
+throw_err :: proc(err: ^Error) {
 		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
 		fmt.printfln(
-			"ERROR%s occured in...\nFile: [%s%s%s]\nOstrichDB Procedure: [%s%s%s] @ Line: [%s%d%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+			"ERROR%s occured in...\nFile: [%s%s%s]\nOstrichLite Procedure: [%s%s%s] @ Line: [%s%d%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
 			RESET,
 			BOLD,
 			err.location.file_path,
@@ -190,32 +187,9 @@ throw_err :: proc(err: ^Error) -> int {
 			err.message,
 			RESET,
 		)
-		return 1
 }
 
-//allows for more customization of error messages.
-//the custom err message that is passed is the same as the err message in the print statement
-throw_custom_err :: proc(err: Error, custom_message: string) -> int {
-		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-		fmt.printfln(
-			"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-			RESET,
-			BOLD,
-			err.location.procedure,
-			RESET,
-			BOLD,
-			err.type,
-			RESET,
-			BOLD,
-			custom_message,
-			RESET,
-		)
-		return 1
-}
-
-
-
-//Hanles all error related shit, just pass it the two args and you are good. - Marshall
+//Handles all error related shit, just pass it the two args and you are good. - Marshall
 make_new_err :: proc(type:ErrorType, location:SourceCodeLocation){
     message:= ErrorMessage[type]
 
@@ -227,6 +201,7 @@ make_new_err :: proc(type:ErrorType, location:SourceCodeLocation){
     throw_err(error)
     log_err(fmt.tprintf("%s", error.message), location)
 
-
     free(error)
 }
+
+
