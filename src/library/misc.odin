@@ -38,16 +38,19 @@ ORANGE :: "\033[38;5;208m"
 BOLD :: "\033[1m"
 ITALIC :: "\033[3m"
 UNDERLINE :: "\033[4m"
-BOLD_UNDERLINE :: "\033[4m\033[1m" //:) makes formatting even easier - SchoolyB
+BOLD_UNDERLINE :: "\033[4m\033[1m"
 RESET :: "\033[0m"
 
 
 get_ost_version :: proc() -> []u8 {
-    data:[]u8
-	// data := #load("../../version") //WIll end up need to make some sort of fetch to an endpoint
+	data := #load("../../version")
 	return data
 }
 
+get_file_info :: proc(file: string) -> os.File_Info {
+	info, _ := os.stat(file)
+	return info
+}
 
 //used to help with error handling.
 get_line_number :: proc(line: int) -> string {
