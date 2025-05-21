@@ -63,65 +63,71 @@ get_file_format_version :: proc() -> ([]u8, bool) {
 
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
-SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, bool) {
+@(require_results)
+subtract_metadata_size_from_collection :: proc(collection: ^lib.Collection) -> (int, bool) {
 	using lib
 
 	success:= false
 
-	fileInfo, err := os.stat(file)
-	if err != 0 {
-		utils.log_err("Error getting file info", #procedure)
-		return -1, -1
-	}
+	collectionPath:= concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
 
-	totalSize := int(fileInfo.size)
+	collectionInfo:= get_file_info(collectionPath)
+	totalSize := int(collectionInfo.size)
 
-	data, readSuccess := os.read_entire_file(file)
-	if !readSuccess {
-		log_err("Error reading file", #procedure)
-		return -2, -2
-	}
+	data, readSuccess := os.read_entire_file(collectionPath)
 	defer delete(data)
+	if !readSuccess {
+	    make_new_err(.CANNOT_READ_FILE, get_caller_location())
+		return -1, success
+	}
 
 	content := string(data)
+	defer delete(content)
 
 	// Find metadata end marker
 	metadataEnd := strings.index(content, METADATA_END)
 	if metadataEnd == -1 {
-		log_err("Metadata end marker not found", #procedure)
-		return -3, -3
+		return -2, success
+	}else{
+	    success = true
 	}
 
 	// Add length of end marker to get total metadata size
 	metadataSize := metadataEnd + len(METADATA_END)
 
 	// Return actual content size (total - metadata) and metadata size
-	return totalSize - metadataSize, metadataSize
+	return  metadataSize, success
 }
 
 // Calculates a SHA-256 checksum for .ostrichdb files based on file content
-GENERATE_CHECKSUM :: proc(fn: string) -> string {
-	using const
-	using utils
+@(require_results)
+generate_checksum :: proc(collection: ^lib.Collection) -> string {
+	using lib
+	using fmt
+	using strings
 
-	data, readSuccess := os.read_entire_file(fn)
+
+	collectionPath:= concat_standard_collection_name(collection.name)
+	data, readSuccess := read_file(collectionPath, get_caller_location())
+	defer delete(data)
 	if !readSuccess {
-		log_err("Could not read file for checksum calculation", #procedure)
+		make_new_err(.CANNOT_READ_FILE, get_caller_location())
 		return ""
 	}
-	defer delete(data)
 
 	content := string(data)
+	defer delete(content)
 
 	//find metadata section boundaries
-	metadataStart := strings.index(content, METADATA_START)
-	metadataEnd := strings.index(content, METADATA_END)
+	metadataStart := index(content, METADATA_START)
+	metadataEnd := index(content, METADATA_END)
 
 	if metadataEnd == -1 {
 		// For new files, generate unique initial checksum
-		uniqueContent := fmt.tprintf("%s_%v", fn, time.now())
+		uniqueContent := tprintf("%s_%v", collection.name, time.now())
 		hashedContent := hash.hash_string(hash.Algorithm.SHA256, uniqueContent)
-		return strings.clone(fmt.tprintf("%x", hashedContent))
+		return clone(tprintf("%x", hashedContent))
 	}
 
 	//extract content minus metadata header
@@ -131,106 +137,90 @@ GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	hashedContent := hash.hash_string(hash.Algorithm.SHA256, actualContent)
 
 	//format hash so that its fucking readable...
-	splitComma := strings.split(fmt.tprintf("%x", hashedContent), ",")
-	joinedSplit := strings.join(splitComma, "")
-	trimRBracket := strings.trim(joinedSplit, "]")
-	trimLBRacket := strings.trim(trimRBracket, "[")
-	NoWhitespace, _ := strings.replace(trimLBRacket, " ", "", -1)
+	splitComma := split(tprintf("%x", hashedContent), ",")
+	joinedSplit := join(splitComma, "")
+	trimRBracket := trim(joinedSplit, "]")
+	trimLBRacket := trim(trimRBracket, "[")
+	checksumString, _ := strings.replace(trimLBRacket, " ", "", -1)
 
-	return strings.clone(NoWhitespace)
+	delete(splitComma)
+	delete(joinedSplit)
+	delete(trimRBracket)
+	delete(trimLBRacket)
+
+
+	return clone(checksumString)
 }
 
-//!Only used when to append the meta template upon .ostrichdb file creation NOT modification
+//!Only used when to append the metadata template upon .ostrichdb file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
-APPEND_METADATA_HEADER_TO_COLLECTION :: proc(fn: string) -> bool {
-	using const
-	using utils
+@(require_results)
+append_metadata_header_to_collection :: proc(collection: ^lib.Collection) -> bool {
+	using lib
+	using strings
 
-	rawData, readSuccess := os.read_entire_file(fn)
-	defer delete(rawData)
+	success:= false
+
+	collectionPath:= concat_standard_collection_name(collection.name)
+	data, readSuccess := read_file(collectionPath, get_caller_location())
+	defer delete(data)
 	if !readSuccess {
-	errorLocation:= get_caller_location()
-		error1 := new_err(
-			.CANNOT_READ_FILE,
-			get_err_msg(.CANNOT_READ_FILE),
-			errorLocation
-		)
-		throw_err(error1)
-		log_err("Error readinding collection file", #procedure)
-		return false
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+		return success
 	}
 
-	dataAsStr := cast(string)rawData
-	if strings.has_prefix(dataAsStr, METADATA_START) {
-		log_err("Metadata header already present", #procedure)
-		return false
+	if has_prefix(string(data), METADATA_START) { //metadata header already found
+		return success
 	}
 
-	file, openSuccess := os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
+	file, openSuccess := os.open(collectionPath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
-
-	if openSuccess != 0 {
-	errorLocation:= get_caller_location()
-		error1 := new_err(
-			.CANNOT_OPEN_FILE,
-			get_err_msg(.CANNOT_OPEN_FILE),
-			errorLocation
-		)
-		throw_err(error1)
-		log_err("Error opening collection file", #procedure)
-		return false
+	if openSuccess != 0{
+        make_new_err(.CANNOT_OPEN_FILE, get_caller_location())
+        return success
 	}
 
-	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
-
-	writter, ok := os.write(file, blockAsBytes)
-	if ok != 0 {
-	errorLocation:= get_caller_location()
-		error1 := new_err(
-			.CANNOT_WRITE_TO_FILE,
-			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			errorLocation
-		)
-		throw_err(error1)
-		log_err("Error writing metadata header to collection file", #procedure)
-		return false
+	writeSuccess := write_to_file(collectionPath,transmute([]u8)concatenate(METADATA_HEADER),get_caller_location())
+	if !writeSuccess {
+        make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
+	}else{
+	    success= true
 	}
-	return true
+
+	return success
 }
 
 
 // Sets the passed in metadata field with an explicit value that is defined within this procedure
 // 0 = Encryption state, 1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
-ASSIGN_EXPLICIT_METADATA_VALUE :: proc(fn: string, field: types.MetadataField, value: string = "") {
-	using utils
+explicitly_assign_metadata_value :: proc(collection:^lib.Collection, field: lib.MetadataField, value: string = "") -> bool {
+	using lib
+	using fmt
+	using strings
 
-	data, readSuccess := os.read_entire_file(fn)
-	if !readSuccess {
-	errorLocation:= get_caller_location()
-		error1 := new_err(
-			.CANNOT_READ_FILE,
-			get_err_msg(.CANNOT_READ_FILE),
-			errorLocation
-		)
-		throw_err(error1)
-		return
-	}
+	success:= false
+
+	collectionPath:= concat_standard_collection_name(collection.name)
+	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
+	if !readSuccess {
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+		return success
+	}
 
-	content := string(data)
-	lines := strings.split(content, "\n")
+	lines := split(string(data), "\n")
 	defer delete(lines)
 
 	//not doing anything with h,m,s yet but its there if needed
-	currentDate, h, m, s := utils.get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
-	fileInfo := GET_FILE_INFO(fn)
+	currentDate, h, m, s := get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
+	fileInfo := get_file_info(collectionPath)
 	fileSize := fileInfo.size
 
 	found := false
 	for line, i in lines {
 		switch field {
 		case .ENCRYPTION_STATE:
-			if strings.has_prefix(line, "# Encryption State:") {
+			if has_prefix(line, "# Encryption State:") {
 				if value != "" {
 					lines[i] = fmt.tprintf("# Encryption State: %s", value)
 				} else {
@@ -240,42 +230,40 @@ ASSIGN_EXPLICIT_METADATA_VALUE :: proc(fn: string, field: types.MetadataField, v
 			}
 			break
 		case .FILE_FORMAT_VERSION:
-			if strings.has_prefix(line, "# File Format Version:") {
-				lines[i] = fmt.tprintf("# File Format Version: %s", SET_FFV())
+			if has_prefix(line, "# File Format Version:") {
+				// lines[i] = fmt.tprintf("# File Format Version: %s", set_ffv()) //Todo: need to figure out how to deal with ffv
 				found = true
 			}
 			break
 		case .PERMISSION:
-			if strings.has_prefix(line, "# Permission:") {
-				lines[i] = fmt.tprintf("# Permission: %s", "Read-Write")
+			if has_prefix(line, "# Permission:") {
+				lines[i] = tprintf("# Permission: %s", "Read-Write")
 				found = true
 			}
 		case .DATE_CREATION:
-			if strings.has_prefix(line, "# Date of Creation:") {
-				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
+			if has_prefix(line, "# Date of Creation:") {
+				lines[i] = tprintf("# Date of Creation: %s", currentDate)
 				found = true
 			}
 			break
 		case .DATE_MODIFIED:
-			if strings.has_prefix(line, "# Date Last Modified:") {
-				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
+			if has_prefix(line, "# Date Last Modified:") {
+				lines[i] = tprintf("# Date Last Modified: %s", currentDate)
 				found = true
 			}
 			break
 		case .FILE_SIZE:
-			if strings.has_prefix(line, "# File Size:") {
-				actualSize, _ := SUBTRACT_METADATA_SIZE(fn)
+			if has_prefix(line, "# File Size:") {
+				actualSize, _ := subtract_metadata_size_from_collection(collection)
 				if actualSize != -1 {
-					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
+					lines[i] = tprintf("# File Size: %d Bytes", actualSize)
 					found = true
-				} else {
-					fmt.printfln("Error calculating file size for file %s", fn)
 				}
 			}
 			break
 		case .CHECKSUM:
-			if strings.has_prefix(line, "# Checksum:") {
-				lines[i] = fmt.tprintf("# Checksum: %s", GENERATE_CHECKSUM(fn))
+			if has_prefix(line, "# Checksum:") {
+				lines[i] = tprintf("# Checksum: %s", generate_checksum(collection))
 				found = true
 			}
 		}
@@ -285,46 +273,40 @@ ASSIGN_EXPLICIT_METADATA_VALUE :: proc(fn: string, field: types.MetadataField, v
 	}
 
 	if !found {
-		fmt.printfln("Metadata field %v not found in file: %s ", field ,fn)
-		return
+		return success
 	}
 
 	newContent := strings.join(lines, "\n")
-	writeSuccess := os.write_entire_file(fn, transmute([]byte)newContent)
+	defer delete(newContent)
+
+	writeSuccess := write_to_file(collectionPath, transmute([]byte)newContent, get_caller_location())
+	if !writeSuccess{
+        make_new_err(.CANNOT_WRITE_TO_FILE,get_caller_location())
+        return success
+	}else{
+	    success = true
+	}
+
+	return success
 }
 
 
 //returns the string value of the passed metadata field
 // colType: 1 = public(standard), 2 = history, 3 = config, 4 = ids
-GET_METADATA_FIELD_VALUE :: proc(
-	fn, field: string,
-	colType: types.CollectionType, d: ..[]byte
-) -> (
-	value: string,
-	err: int,
-) {
-	using const
-	using utils
+@(require_results)
+get_metadata_field_value :: proc(collection:^lib.Collection, field: string,colType: lib.CollectionType, d: ..[]byte) -> (string, bool) {
+	using lib
+	using fmt
 
-	file: string
-	#partial switch (colType) {
-	case .STANDARD_PUBLIC:
-		file = concat_standard_collection_name(fn)
-		break
-	case .USER_CONFIG_PRIVATE:
-	    file = concat_user_config_collection_name(fn)
-	case .SYSTEM_CONFIG_PRIVATE:
-		file = SYSTEM_CONFIG_PATH
-		break
-	case .USER_HISTORY_PRIVATE:
-		file = utils.concat_user_history_path(types.current_user.username.Value)
-		break
-	case .SYSTEM_ID_PRIVATE:
-		file = ID_PATH
-		break
+	success:= false
+
+	collectionPath := concat_standard_collection_name(collection.name)
+	data, readSuccess := read_file(collectionPath, get_caller_location())
+	defer delete(data)
+	if !readSuccess{
+        make_new_err(.CANNOT_READ_FILE, get_caller_location())
+        return "", success
 	}
-
-	data, readSuccess := utils.read_file(file, #procedure)
 
 	if len(d) != 0{
 	    if len(d[0])> 0{ //if there is a passed in d(data) arg then data is equal to that
@@ -332,21 +314,12 @@ GET_METADATA_FIELD_VALUE :: proc(
 		}
 	}
 
-	if !readSuccess {
-		fmt.println("Error reading file: ", file)
-		utils.log_err("Error reading file", #procedure)
-		return "", 1
-	}
-	defer delete(data)
-
-	content := string(data)
-	lines := strings.split(content, "\n")
+	lines := strings.split(string(data), "\n")
 	defer delete(lines)
 
 	// Check if the metadata header is present
 	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
-		log_err("Missing metadata start marker", #procedure)
-		return "", -1
+		return "", success
 	}
 
 	// Find the end of metadata section
@@ -359,80 +332,46 @@ GET_METADATA_FIELD_VALUE :: proc(
 	}
 
 	if metadataEndIndex == -1 {
-		log_err("Missing metadata end marker", #procedure)
-		return "", -2
+		return "", success
 	}
 
 	// Verify the header has the correct number of lines
 	expectedLines := 9 // 7 metadata fields + start and end markers
 	if metadataEndIndex != expectedLines - 1 {
-		log_err("Invalid metadata header length", #procedure)
-		return "", -3
+		return "", success
 	}
 
 	for i in 1 ..< 6 {
 		if strings.has_prefix(lines[i], field) {
 			val := strings.split(lines[i], ": ")
-			return strings.clone(val[1]), 0
+			return strings.clone(val[1]), true
 		}
 	}
-
-
-	return "", -4
+	return "", success
 }
 
 
-//Similar to the ASSIGN_EXPLICIT_METADATA_VALUE  but updates a fields value the passed in newValue
-UPDATE_METADATA_MEMBER_VALUE :: proc(fn, newValue: string,field: types.MetadataField,colType: types.CollectionType, username:..string) -> bool {
-	using utils
-	using const
+//Similar to the explicitly_assign_metadata_value but updates a fields value the passed in newValue
+//Currently only supports the following metadata fields:
+//ENCRYPTION STATE
+//PERMSSION
+@(require_results)
+update_metadata_value :: proc(collection:^lib.Collection, newValue: string,field: lib.MetadataField,colType: lib.CollectionType, username:..string) -> bool {
+	using lib
+	using strings
 
-	file: string
+	success:= false
 
-	#partial switch (colType) {
-	case .STANDARD_PUBLIC:
-		file = concat_standard_collection_name(fn)
-		break
-	case .USER_CONFIG_PRIVATE:
-	    file = concat_user_config_collection_name(fn)
-	case .USER_CREDENTIALS_PRIVATE:
-		file = utils.concat_user_credential_path(fn)
-		break
-	case .SYSTEM_CONFIG_PRIVATE:
-		file = SYSTEM_CONFIG_PATH
-		break
-	case .USER_HISTORY_PRIVATE:
-	if len(types.current_user.username.Value) == 0 && len(types.user.username.Value) != 0  {
-		file = utils.concat_user_history_path(types.user.username.Value)
-	}else{
-	    file = utils.concat_user_history_path(types.current_user.username.Value)
-	}
-	break
-	case .SYSTEM_ID_PRIVATE:
-		file = ID_PATH
-		break
-	//TODO: add case for benchmark collection
-
-	}
-
-	data, readSuccess := os.read_entire_file(file)
-	if !readSuccess {
-		errorLocation:= get_caller_location()
-		error1 := new_err(
-			.CANNOT_READ_FILE,
-			get_err_msg(.CANNOT_READ_FILE),
-			errorLocation
-		)
-		fmt.println("Cannot read file: ", file)
-		throw_err(error1)
-		return false
-	}
+	collectionPath:= concat_standard_collection_name(collection.name)
+	data, readSuccess := read_file(collectionPath,get_caller_location())
 	defer delete(data)
+	if !readSuccess {
+	   make_new_err(.CANNOT_OPEN_FILE,get_caller_location())
+		return success
+	}
 
-	content := string(data)
-	lines := strings.split(content, "\n")
+	lines := strings.split(string(data), "\n")
 	defer delete(lines)
-
 
 	fieldFound := false
 	for line, i in lines {
@@ -449,38 +388,43 @@ UPDATE_METADATA_MEMBER_VALUE :: proc(fn, newValue: string,field: types.MetadataF
 				fieldFound = true
 			}
 			break
-		case:
-			fmt.println("Invalid metadata field provided")
-			break
 		}
 	}
 
 	if !fieldFound {
-		fmt.printfln("Metadata field not found in file. Proc: ", #procedure)
-		return false
+		return success
 	}
 
 	newContent := strings.join(lines, "\n")
-	success := os.write_entire_file(file, transmute([]byte)newContent)
+	defer delete(newContent)
+
+	writeSuccess := write_to_file(collectionPath, transmute([]byte)newContent, get_caller_location())
+	if !writeSuccess{
+	    make_new_err(.CANNOT_WRITE_TO_FILE, get_caller_location())
+		return success
+	}else{
+        success = true
+	}
+
 	return success
 }
 
 
 //Assigns all neccesary metadata field values after a collection has been made
-INIT_METADATA_IN_NEW_COLLECTION :: proc(fn: string) {
-    ASSIGN_EXPLICIT_METADATA_VALUE(fn, .ENCRYPTION_STATE)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_FORMAT_VERSION)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .DATE_CREATION)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .DATE_MODIFIED)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_SIZE)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .CHECKSUM)
+INIT_METADATA_IN_NEW_COLLECTION :: proc(collection: ^lib.Collection) {
+    explicitly_assign_metadata_value(collection, .ENCRYPTION_STATE)
+	explicitly_assign_metadata_value(collection, .FILE_FORMAT_VERSION)
+	explicitly_assign_metadata_value(collection, .DATE_CREATION)
+	explicitly_assign_metadata_value(collection, .DATE_MODIFIED)
+	explicitly_assign_metadata_value(collection, .FILE_SIZE)
+	explicitly_assign_metadata_value(collection, .CHECKSUM)
 }
 
 
 //Used after most operations on a collection file to update the metadata fields
-UPDATE_METADATA_FIELD_AFTER_OPERATION :: proc(fn: string) {
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .DATE_MODIFIED)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_FORMAT_VERSION)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_SIZE)
-	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .CHECKSUM)
+UPDATE_METADATA_FIELD_AFTER_OPERATION :: proc(collection: ^lib.Collection) {
+	explicitly_assign_metadata_value(collection, .DATE_MODIFIED)
+	explicitly_assign_metadata_value(collection, .FILE_FORMAT_VERSION)
+	explicitly_assign_metadata_value(collection, .FILE_SIZE)
+	explicitly_assign_metadata_value(collection, .CHECKSUM)
 }
