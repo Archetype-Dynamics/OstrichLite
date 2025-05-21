@@ -61,6 +61,30 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
 	return success
 }
 
+erase_collection ::proc(collection: ^lib.Collection) -> bool{
+   	using lib
+
+    success:= false
+
+    if !check_if_collection_exists(collection){
+        make_new_err(.COLLECTION_DOES_NOT_EXIST, get_caller_location())
+        return success
+    }
+
+	collectionPath := concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
+
+	deleteSuccess := os.remove(collectionPath)
+	if deleteSuccess != 0 {
+        make_new_err(.CANNOT_DELETE_FILE, get_caller_location())
+	}else {
+        success = true
+	}
+
+	return success
+}
+
+
 //Renames the passed in collection.name to the new name
 rename_collection :: proc(collection: ^lib.Collection, newName:string) -> bool {
     using lib
