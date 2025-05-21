@@ -34,6 +34,7 @@ make_new_cluster :: proc(collection: ^lib.Collection, clusterName: string) -> ^l
 
 //writes the physical cluster block to the passed in collection
 //Assigns the clusters name and id with the passed in cluster.name and cluster.id
+@(require_results)
 create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool{
     using lib
     using strings
@@ -113,6 +114,7 @@ create_cluster_block_in_collection :: proc(collection: ^lib.Collection, cluster:
 }
 
 //Renames a cluster to the passed in newName arg. The old name is passed in via ^cluster.name
+@(require_results)
 rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newName: string) ->bool{
     using lib
     using fmt
@@ -207,6 +209,7 @@ rename_cluster :: proc(collection: ^lib.Collection,  cluster: ^lib.Cluster, newN
 }
 
 //Finds and deletes the cluster with the passed in cluster.name
+@(require_results)
 erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
     using lib
     using fmt
@@ -301,6 +304,7 @@ erase_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> bool{
 
 //Finds and returns the passed in cluster and all its data as a whole, excluding the identifier typed records
 //Dont forget to delete the return value in the calling prcoedure
+@(require_results)
 fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (string, bool){
     using lib
     using fmt
@@ -354,6 +358,7 @@ fetch_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster)-> (stri
 }
 
 //Deletes all data within a cluster excluding the name, id all while retaining the clusters structure
+@(require_results)
 purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool{
     using lib
     using fmt
@@ -443,6 +448,7 @@ purge_cluster ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> bool
 }
 
 //Read over the passed in collection and try to find the a cluster that matches the name of the passed in cluster arg
+@(require_results)
 check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) ->bool{
     using lib
     using fmt
@@ -506,6 +512,7 @@ check_if_cluster_exsists_in_collection ::proc(collection: ^lib.Collection, clust
 //1. ALL cluster ids in a collectionas i64
 //2. ALL cluster ids in a collection as strings
 //remember to delete the returned values in the calling procedure
+@(require_results)
 get_all_cluster_ids_in_collection :: proc(collection: ^lib.Collection) -> ([dynamic]i64, [dynamic]string) {
     using lib
     using fmt
@@ -555,6 +562,7 @@ get_all_cluster_ids_in_collection :: proc(collection: ^lib.Collection) -> ([dyna
 
 //Returns a dynamic array of all cluster names within the passed in collection
 //Remember to delete return value in calling procedure
+@(require_results)
 get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dynamic]string) {
     using lib
     using fmt
@@ -594,6 +602,7 @@ get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dy
 
 
 // Reads over the passed in collection for the passed in cluster, then returns the id of that cluster
+@(require_results)
 get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluster) -> (clusterID:i64,success:bool,){
     using lib
     using fmt
@@ -660,6 +669,7 @@ get_clusters_id_by_name :: proc(collection: ^lib.Collection, cluster:^lib.Cluste
 }
 
 //Reads over the passed in collection for the passed in cluster ID. If found return the name of the cluster
+@(require_results)
 get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (clusterName:string,success: bool,){
     using lib
     using fmt
@@ -720,6 +730,7 @@ get_clusters_name_by_id ::proc(collection: ^lib.Collection, clusterID:i64) -> (c
 //5. Tab characters
 //6. Newline characters
 //7. Whitespace characters
+@(require_results)
 get_cluster_size ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster) -> (int, bool){
     using lib
     using fmt
