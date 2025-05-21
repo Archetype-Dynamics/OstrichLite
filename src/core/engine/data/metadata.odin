@@ -411,7 +411,7 @@ update_metadata_value :: proc(collection:^lib.Collection, newValue: string,field
 
 
 //Assigns all neccesary metadata field values after a collection has been made
-INIT_METADATA_IN_NEW_COLLECTION :: proc(collection: ^lib.Collection) {
+init_metadate_in_new_collection :: proc(collection: ^lib.Collection) {
     explicitly_assign_metadata_value(collection, .ENCRYPTION_STATE)
 	explicitly_assign_metadata_value(collection, .FILE_FORMAT_VERSION)
 	explicitly_assign_metadata_value(collection, .DATE_CREATION)
@@ -421,8 +421,8 @@ INIT_METADATA_IN_NEW_COLLECTION :: proc(collection: ^lib.Collection) {
 }
 
 
-//Used after most operations on a collection file to update the metadata fields
-UPDATE_METADATA_FIELD_AFTER_OPERATION :: proc(collection: ^lib.Collection) {
+//Used after most operations on a collection file to update metadata fields that need to be updated
+update_metadata_fields_after_operation :: proc(collection: ^lib.Collection) {
 	explicitly_assign_metadata_value(collection, .DATE_MODIFIED)
 	explicitly_assign_metadata_value(collection, .FILE_FORMAT_VERSION)
 	explicitly_assign_metadata_value(collection, .FILE_SIZE)

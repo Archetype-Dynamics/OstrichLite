@@ -44,9 +44,16 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
 
     file, creationSuccess:= os.open(collectionPath, os.O_CREATE, 0o666)
 	defer os.close(file)
-    //Todo: need to append metadata header here
-    // metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
-	// metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write",MetadataField.PERMISSION, colType)
+
+    appendSuccess:= append_metadata_header_to_collection(collection)
+    if !appendSuccess{
+        return success
+    }
+
+	updateSuccess:=update_metadata_value(collection, "Read-Write",MetadataField.PERMISSION, .STANDARD_PUBLIC)
+	if !updateSuccess{
+	    return success
+	}
 
 	if creationSuccess != nil{
 		make_new_err(.CANNOT_CREATE_COLLECTION, get_caller_location())
@@ -55,8 +62,7 @@ create_collection_file :: proc(collection: ^lib.Collection) -> bool {
 	    success = true
 	}
 
-	//Todo: need to update metadata header field values
-	// metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
+	init_metadate_in_new_collection(collection)
 
 	return success
 }
