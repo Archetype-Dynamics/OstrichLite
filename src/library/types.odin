@@ -204,6 +204,7 @@ HttpMethod :: enum {
     POST,
     PUT,
     DELETE,
+    OPTIONS,
 }
 
 HttpMethodString := [HttpMethod]string{
@@ -212,6 +213,7 @@ HttpMethodString := [HttpMethod]string{
     .POST    = "POST",
     .PUT    = "PUT",
     .DELETE    = "DELETE",
+    .OPTIONS = "OPTIONS",
 }
 
 //All request handler procecures which are located in in handlers.odin need to foolow this signature.
