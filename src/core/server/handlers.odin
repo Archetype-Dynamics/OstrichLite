@@ -106,7 +106,7 @@ handle_get_request :: proc(method: lib.HttpMethod, path:string, headers: map[str
     case "version":
        	version := get_ost_version()
         newHTTPStatus:= make_new_http_status(.OK, HttpStatusText[.OK])
-        return newHTTPStatus, fmt.tprintf("OstrichDB Version: %s\n", version)
+        return newHTTPStatus, fmt.tprintf("OstrichLite Version: %s\n", version)
 
 
         //Add more GET method endpoints here when need

@@ -45,7 +45,6 @@ parse_http_request :: proc(rawData:[]byte) -> (method: lib.HttpMethod, path: str
 	}
 
 	methodStringPart := trim_space(requestParts[0])
-	defer delete(methodStringPart)
 
 	for httpMethod , index in HttpMethodString{
 	    if methodStringPart == httpMethod{
@@ -55,7 +54,7 @@ parse_http_request :: proc(rawData:[]byte) -> (method: lib.HttpMethod, path: str
 	}
 
 	path = trim_space(requestParts[1])
-	defer delete(path)
+
 	//Create a map to store the headers
 	headers = make(map[string]string)
 	headerEnd := 1
@@ -90,14 +89,13 @@ build_http_response :: proc(status: ^lib.HttpStatus, headers: map[string]string,
 
 	version := tprintf("Server: %s\r\n", string(get_ost_version()))
 	response := tprintf("HTTP/1.1 %d %s\r\n", int(status.statusCode), status.text)
-	defer delete(response)
 
-	// Add default headers
+	//Add default headers
 	response = concatenate([]string{response, version})
 	response = concatenate([]string{response, tprintf("Content-Length: %d\r\n", len(body))})
 	response = concatenate([]string{response, "Connection: close\r\n"})
 
-	// Add custom headers
+	//Add custom headers
 	for key, value in headers {
 		response = concatenate([]string{response, tprintf("%s: %s\r\n", key, value)})
 	}

@@ -81,24 +81,16 @@ log_server_event :: proc(event: ^lib.ServerEvent) -> bool {
     using lib
     using fmt
 
-    eventTriggered:= tprintf("Server Event Triggered: '%s'\n",event.name)
-    eventTime:= tprintf("Server Event Time: '%v'\n", event.timestamp)
-    eventDesc:= tprintf("Server Event Description: '%s'\n", event.description)
-    eventType:= tprintf("Server Event Type: '%v'\n", event.type,)
-    eventIsReq := tprintf("Server Event is a Request Event: '%v'\n", event.isRequestEvent,)
+    eventTriggered:= tprintfln("Server Event Triggered: '%s'",event.name)
+    eventTime:= tprintfln("Server Event Time: '%v'", event.timestamp)
+    eventDesc:= tprintfln("Server Event Description: '%s'", event.description)
+    eventType:= tprintfln("Server Event Type: '%v'", event.type,)
+    eventIsReq := tprintfln("Server Event is a Request Event: '%v'", event.isRequestEvent,)
     logMsg := strings.concatenate([]string{eventTriggered, eventTime, eventDesc, eventType, eventIsReq, })
-
-    defer delete(eventTriggered)
-    defer delete(eventTime)
-    defer delete(eventDesc)
-    defer delete(eventType)
-    defer delete(eventIsReq)
     defer delete(logMsg)
 
-	concatLogMsg: string
-	someVar:string //Why did I name this variable like this LMAOO - Marshall
+	concatLogMsg, someVar: string
 	defer delete(concatLogMsg)
-
 
 	if event.isRequestEvent == true {
 	    switch(event.route.method){
@@ -122,12 +114,9 @@ log_server_event :: proc(event: ^lib.ServerEvent) -> bool {
 			break
 	}
 
-	routePath:= tprintf("Server Event Route Path: '%s'\n", event.route.path,)
-	routeMethod:= tprintf("Server Event Route Method: '%s'\n", someVar)
-	defer delete(routePath)
-	defer delete(routeMethod)
-
-	concatLogMsg = strings.concatenate([]string{logMsg, routePath, routeMethod, "\n\n"})
+	    routePath:= tprintf("Server Event Route Path: '%s'\n", event.route.path,)
+	    routeMethod:= tprintf("Server Event Route Method: '%s'\n", someVar)
+	    concatLogMsg = strings.concatenate([]string{logMsg, routePath, routeMethod, "\n\n"})
 
 	}
 

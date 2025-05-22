@@ -41,22 +41,34 @@ add_route_to_router :: proc(router: ^lib.Router,method: lib.HttpMethod, path: st
 handle_http_request :: proc(router: ^lib.Router,method: lib.HttpMethod, path:string, headers: map[string]string, args:[]string={""}) -> (status: ^lib.HttpStatus, response: string,) {
 	using lib
 
-	validMethod: HttpMethod
+	validMethods:[]HttpMethod={.OPTIONS, .GET, .POST, .PUT, .DELETE, .HEAD}
 
-	for route in router.routes {
-	    validMethod = method
-		if route.method != validMethod {
-			return  make_new_http_status(.BAD_REQUEST, HttpStatusText[.BAD_REQUEST]), "400 Bad Request\n"
-		}
-
-		// Use dynamic path matching
-		pathMatch := is_path_match(route.path, path)
-		if !pathMatch {
-			return route.handler(method, path, headers,args)//Todo: need to get the HttpMethod equivalent of 'method' and pass it here
+	// First check if the request method is valid
+	methodIsValid := false
+	for validMethod in validMethods {
+		if method == validMethod {
+			methodIsValid = true
+			break
 		}
 	}
 
-	return make_new_http_status(.NOT_FOUND, HttpStatusText[.NOT_FOUND]),"404 Not Found\n"
+	if !methodIsValid {
+		return make_new_http_status(.BAD_REQUEST, HttpStatusText[.BAD_REQUEST]), "Bad Request: Invalid HTTP method"
+	}
+
+	// Check each route for a match
+	for route in router.routes {
+		// Use dynamic path matching
+		pathMatch := is_path_match(route.path, path)
+
+		// If the path matches and the method matches, call the handler
+		if pathMatch && route.method == method {
+			return route.handler(method, path, headers, args)
+		}
+	}
+
+	// If no route matched, return 404
+	return make_new_http_status(.NOT_FOUND, HttpStatusText[.NOT_FOUND]), "404 Not Found\n"
 }
 
 
@@ -75,8 +87,8 @@ is_path_match :: proc(routePath: string, requestPath: string) -> bool {
 	// Handle query parameters in both route and request paths
 	lastRouteSegment := routeSegments[len(routeSegments) - 1]
 	lastRequestSegment := requestSegments[len(requestSegments) - 1]
-	defer delete(lastRouteSegment)
-	defer delete(lastRequestSegment)
+	// defer delete(lastRouteSegment)
+	// defer delete(lastRequestSegment)
 
 	// Extract base paths (without query parameters)
 	if contains(lastRouteSegment, "?") {
