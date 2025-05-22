@@ -165,10 +165,31 @@ Server :: struct {
 }
 
 HttpStatusCode :: enum{
-    OK                         = 200,
-	BAD_REQUEST   = 400,
-	NOT_FOUND      = 404,
-	SERVER_ERROR = 500,
+    //2xx codes
+    OK                  = 200,
+    CREATE              = 201,
+    NO_CONTENT          = 204,
+    PARTIAL_CONTENT     = 206,
+    //3xx codes
+    MOVED_PERMANENTLY   = 301,
+    FOUND               = 302,
+    NOT_MODIFIED        = 304,
+    //4xx codes
+    BAD_REQUEST         = 400,
+    UNAUTHORIZED        = 401,
+    FORBIDDEN           = 403,
+    NOT_FOUND           = 404,
+    METHOD_NOT_ALLOWED  = 405,
+    CONFLICT            = 409,
+    PAYLOAD_TOO_LARGE   = 413,
+    UNSUPPORTED_MEDIA   = 415,
+    TOO_MANY_REQUESTS   = 429,
+    //5xx codes
+    SERVER_ERROR        = 500,
+    NOT_IMPLEMENTED     = 501,
+    BAD_GATEWAY         = 502,
+    SERVICE_UNAVAILABLE = 503,
+    GATEWAY_TIMEOUT     = 504,
 }
 
 HttpStatus :: struct {
@@ -208,10 +229,31 @@ Router :: struct {
 
 //Cant find docs on #sparse.  No idea what it is but if it isn't here this wont work
 HttpStatusText :: #sparse[HttpStatusCode]string {
-	.OK                         = "OK",
-	.BAD_REQUEST   = "Bad Request",
-	.NOT_FOUND      = "Not Found",
-	.SERVER_ERROR = "Internal Server Error",
+    //2xx codes
+    .OK                  = "OK",
+    .CREATE              = "Created",
+    .NO_CONTENT          = "No Content",
+    .PARTIAL_CONTENT     = "Partial Content",
+    //3xx codes
+    .MOVED_PERMANENTLY   = "Moved Permanently",
+    .FOUND               = "Found",
+    .NOT_MODIFIED        = "Not Modified",
+    //4xx codes
+    .BAD_REQUEST         = "Bad Request",
+    .UNAUTHORIZED        = "Unauthorized",
+    .FORBIDDEN           = "Forbidden",
+    .NOT_FOUND           = "Not Found",
+    .METHOD_NOT_ALLOWED  = "Method Not Allowed",
+    .CONFLICT            = "Conflict",
+    .PAYLOAD_TOO_LARGE   = "Payload Too Large",
+    .UNSUPPORTED_MEDIA   = "Unsupported Media Type",
+    .TOO_MANY_REQUESTS   = "Too Many Requests",
+    //5xx codes
+    .SERVER_ERROR        = "Internal Server Error",
+    .NOT_IMPLEMENTED     = "Not Implemented",
+    .BAD_GATEWAY         = "Bad Gateway",
+    .SERVICE_UNAVAILABLE = "Service Unavailable",
+    .GATEWAY_TIMEOUT     = "Gateway Timeout",
 }
 
 ServerSession :: struct {
