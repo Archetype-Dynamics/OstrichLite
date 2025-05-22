@@ -26,6 +26,9 @@ File Description:
 @(private)
 isRunning := true
 
+@(private)
+router := make_new_router()
+
 //The isAutoServing flag is added for NLP. Auto serving will be set to true by default.
 start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	using lib
@@ -44,9 +47,6 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 
 	newServerSession:= make_new_server_session(user)
 	defer free(newServerSession)
-
-	router := make_new_router()
-	defer free(router)
 
 
 	initializedServerStartEvent := make_new_server_event(
@@ -79,7 +79,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	// print_server_event_information(versionRouteEvent)
 
 	// HEAD, POST, GET, DELETE dynamic routes for collections as well as server logging
-	add_route_to_router(router, .HEAD, C_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
+	add_route_to_router(router, .HEAD, C_DYNAMIC_BASE, handle_head_request)
 	addHeadColRoute := make_new_server_event(
 		"Add Route",
 		give_description("HEAD",C_DYNAMIC_BASE),
@@ -92,7 +92,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addHeadColRoute)
 	// print_server_event_information(addHeadColRoute)
 
-	add_route_to_router(router, .POST, C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .POST, C_DYNAMIC_BASE, handle_post_request)
 	addPostColRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.POST],C_DYNAMIC_BASE),
@@ -118,7 +118,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addGetColRoute)
 	// print_server_event_information(addGetColRoute)
 
-	add_route_to_router(router, .DELETE, C_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
+	add_route_to_router(router, .DELETE, C_DYNAMIC_BASE, handle_delete_request)
 	addDeleteColRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.DELETE],C_DYNAMIC_BASE),
@@ -133,7 +133,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 
 
 	// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
-	add_route_to_router(router, .HEAD, CL_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
+	add_route_to_router(router, .HEAD, CL_DYNAMIC_BASE, handle_head_request)
 	addHeadCluRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.HEAD],CL_DYNAMIC_BASE),
@@ -146,7 +146,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addHeadCluRoute)
 	// print_server_event_information(addHeadCluRoute)
 
-	add_route_to_router(router, .POST, CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .POST, CL_DYNAMIC_BASE, handle_post_request)
 	addPostCluRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.POST],CL_DYNAMIC_BASE),
@@ -172,7 +172,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addGetCluRoute)
 	print_server_event_information(addGetCluRoute)
 
-	add_route_to_router(router, .DELETE, CL_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
+	add_route_to_router(router, .DELETE, CL_DYNAMIC_BASE, handle_delete_request)
 	addDeleteCluRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.DELETE],CL_DYNAMIC_BASE),
@@ -187,7 +187,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 
 
 	// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
-	add_route_to_router(router, .HEAD, R_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
+	add_route_to_router(router, .HEAD, R_DYNAMIC_BASE, handle_head_request)
 	addHeadRecRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.HEAD],R_DYNAMIC_BASE),
@@ -200,7 +200,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addDeleteCluRoute)
 	// print_server_event_information(addHeadRecRoute)
 
-	add_route_to_router(router, .POST, R_DYNAMIC_TYPE_QUERY, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .POST, R_DYNAMIC_TYPE_QUERY, handle_post_request)
 	addPostRecRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.POST],R_DYNAMIC_TYPE_QUERY),
@@ -213,7 +213,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addDeleteCluRoute)
 	// print_server_event_information(addPostRecRoute)
 
-	add_route_to_router(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, HANDLE_PUT_REQUEST)
+	add_route_to_router(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, handle_put_request)
 	addPutRecRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.PUT],R_DYNAMIC_TYPE_VALUE_QUERY),
@@ -239,7 +239,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	free(addGetRecRoute)
 	// print_server_event_information(addGetRecRoute)
 
-	add_route_to_router(router, .DELETE, R_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
+	add_route_to_router(router, .DELETE, R_DYNAMIC_BASE, handle_delete_request)
 	addDeleteRecRoute := make_new_server_event(
 		"Add Route",
 		give_description(HttpMethodString[.DELETE],R_DYNAMIC_BASE),
@@ -255,7 +255,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 
 
 	// POST & GET dynamic routes for collections, clusters and records
-	add_route_to_router(router, .POST, BATCH_C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .POST, BATCH_C_DYNAMIC_BASE, handle_post_request)
 	   addBatchColPostRoute:= make_new_server_event("Add Route",
 				give_description(HttpMethodString[.POST],BATCH_C_DYNAMIC_BASE),
 				ServerEventType.ROUTINE,
@@ -267,7 +267,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		free(addBatchColPostRoute)
 		// print_server_event_information(addBatchColPostRoute)
 
-	add_route_to_router(router, .POST, BATCH_CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .POST, BATCH_CL_DYNAMIC_BASE, handle_post_request)
 	   addBatchCluPostRoute:= make_new_server_event("Add Route",
 				give_description(HttpMethodString[.POST],BATCH_CL_DYNAMIC_BASE),
 				ServerEventType.ROUTINE,
@@ -279,7 +279,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		free(addBatchCluPostRoute)
 		// print_server_event_information(addBatchCluPostRoute)
 
-	add_route_to_router(router, .POST, BATCH_R_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .POST, BATCH_R_DYNAMIC_BASE, handle_post_request)
 	   addBatchRPostRoute:= make_new_server_event("Add Route",
 				give_description(HttpMethodString[.POST],BATCH_R_DYNAMIC_BASE),
 				ServerEventType.ROUTINE,
@@ -291,7 +291,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		free(addBatchRPostRoute)
 		// print_server_event_information(addBatchRPostRoute)
 
-	add_route_to_router(router, .GET, BATCH_C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .GET, BATCH_C_DYNAMIC_BASE, handle_post_request)
 	   addBatchColGetRoute:= make_new_server_event("Add Route",
 				give_description(HttpMethodString[.GET],BATCH_C_DYNAMIC_BASE),
 				ServerEventType.ROUTINE,
@@ -303,7 +303,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		free(addBatchColGetRoute)
 		// print_server_event_information(addBatchColGetRoute)
 
-	add_route_to_router(router, .GET, BATCH_CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .GET, BATCH_CL_DYNAMIC_BASE, handle_post_request)
 	   addBatchCluGetRoute:= make_new_server_event("Add Route",
 				give_description(HttpMethodString[.GET],BATCH_CL_DYNAMIC_BASE),
 				ServerEventType.ROUTINE,
@@ -315,7 +315,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		free(addBatchCluGetRoute)
 		// print_server_event_information(addBatchCluGetRoute)
 
-	add_route_to_router(router, .GET, BATCH_R_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	add_route_to_router(router, .GET, BATCH_R_DYNAMIC_BASE, handle_post_request)
 	   addBatchRecGetRoute:= make_new_server_event("Add Route",
 				give_description(HttpMethodString[.GET],BATCH_R_DYNAMIC_BASE),
 				ServerEventType.ROUTINE,
@@ -332,13 +332,13 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 	usablePort:= check_if_port_is_free(ServerPorts)
     for p in ServerPorts {
        if p != usablePort{
-               config.port = usablePort
+               server.port = usablePort
                break
        }
     }
 
 	//Create a new endpoint to listen on
-	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
+	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, server.port} //listen on all interfaces
 
 
 	// Creates and listens on a TCP socket
@@ -355,9 +355,9 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 
 	fmt.printf(
 		"OstrichDB server listening on port: %s%d%s\n",
-		utils.BOLD_UNDERLINE,
-		config.port,
-		utils.RESET,
+		BOLD_UNDERLINE,
+		server.port,
+		RESET,
 	)
 	//Main server loop
 	for isRunning {
@@ -366,7 +366,7 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		newServerSession.total_runtime = time.diff(newServerSession.start_timestamp, newServerSession.end_timestamp)
 		result:=check_id_server_session_limi_met(newServerSession)
 		if result  {
-		    fmt.printfln("%sWARNING:%s Maximum server session time of 24 hours reached. Shutting down server...", utils.YELLOW, utils.RESET)
+		    fmt.printfln("%sWARNING:%s Maximum server session time of 24 hours reached. Shutting down server...", YELLOW, RESET)
 		    isRunning = false
 		    // Ping each possible OstrichDB port and if its running kill it
 		    for port in ServerPorts {
@@ -417,41 +417,22 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
 		// Parse incoming request
-		parsedMethod, path, headers := parse_http_request(buf[:bytesRead])
+		mthd, path, headers := parse_http_request(buf[:bytesRead])
 
 		// Create response headers
 		responseHeaders := make(map[string]string)
 		responseHeaders["Content-Type"] = "text/plain"
 		responseHeaders["Servesr"] = "OstrichDB"
-
        defer delete(responseHeaders)
 
-       mthd:HttpMethod
 
-       switch(parsedMethod) {
-       case "HEAD":
-           mthd = .HEAD
-           break
-       case "GET":
-           mthd = .GET
-           break
-       case "POST":
-           mthd = .POST
-           break
-       case "PUT":
-           mthd = .PUT
-           break
-       case "DELETE":
-           mthd = .DELETE
-           break
-       }
 
        // Handle the request using router
-       status, responseBody := HANDLE_HTTP_REQUEST(router, parsedMethod, path, headers)
+       httpStatus, responseBody := handle_http_request(router, mthd, path, headers)
        handleRequestEvent := make_new_server_event(
            "Attempt Request",
            "Attempting to handle request made over the server",
-           types.ServerEventType.ROUTINE,
+           ServerEventType.ROUTINE,
            time.now(),
            true,
            path,
@@ -465,69 +446,71 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
        // Build and send response
-       newHTTPStatus:= make_new_http_status()
-       response := BUILD_HTTP_RESPONSE(status, responseHeaders, responseBody)
-       buildResponseEvent := make_new_server_event(
+       response := build_http_response(httpStatus, responseHeaders, responseBody)
+       attemptToBuildResponseEvent := make_new_server_event(
            "Build Response",
            "Attempting to build a response for the request",
-           types.ServerEventType.ROUTINE,
+           ServerEventType.ROUTINE,
            time.now(),
            false,
            path,
            mthd,
        )
-       print_server_event_information(buildResponseEvent)
-       log_server_event(buildResponseEvent)
+       logResponseBuildAttempt:=log_server_event(attemptToBuildResponseEvent)
+       free(attemptToBuildResponseEvent)
+       // print_server_event_information(attemptToBuildResponseEvent)
+       if !logResponseBuildAttempt do continue //TODO: handle an error here or just leave alone???
 
        if len(response) == 0 {
            buildResponseFailEvent := make_new_server_event(
                "Failed Reponse Build",
                "Failed to build a response",
-               types.ServerEventType.WARNING,
+               ServerEventType.WARNING,
                time.now(),
                false,
                path,
                mthd,
            )
-           print_server_event_information(buildResponseFailEvent)
-           log_server_event(buildResponseFailEvent)
+           logResponseBuildFailure:=log_server_event(buildResponseFailEvent)
+           free(buildResponseFailEvent)
+           // print_server_event_information(buildResponseFailEvent)
+           if !logResponseBuildFailure do continue //TODO: handle error here or just leave alone???
        }
 
-       _, write_err := net.send(socket, response)
-       writeResponseToSocket := make_new_server_event(
+       _, writeError := net.send(socket, response)
+       attempToWriteResponseToSocketEvent := make_new_server_event(
            "Write Respone To Socket",
            "Attempting to write a response to the socket",
-           types.ServerEventType.ROUTINE,
+           ServerEventType.ROUTINE,
            time.now(),
            false,
            path,
            mthd,
        )
+       logWriteResponseToSocket:= log_server_event(attempToWriteResponseToSocketEvent)
+       free(attempToWriteResponseToSocketEvent)
+       // print_server_event_information(attempToWriteResponseToSocketEvent)
+       if !logWriteResponseToSocket do continue
 
-       print_server_event_information(writeResponseToSocket)
-       log_server_event(writeResponseToSocket)
 
-       if write_err != nil {
-           writeResponseToSocketFail := make_new_server_event(
+
+       if writeError != nil {
+           writeToSocketFaileEvent := make_new_server_event(
                "Failed To Write To Socket",
                "Failed to write a response to the socket",
-               types.ServerEventType.CRITICAL_ERROR,
+               ServerEventType.CRITICAL_ERROR,
                time.now(),
                false,
                path,
                mthd,
            )
-           print_server_event_information(writeResponseToSocketFail)
-           log_server_event(writeResponseToSocketFail)
-
-           fmt.println("Error writing to socket:", write_err)
+           logWriteToSocketFail:=log_server_event(writeToSocketFaileEvent)
+           free(writeToSocketFaileEvent)
+           // print_server_event_information(writeToSocketFaileEvent)
+           if !logWriteToSocketFail do continue //TODO: handle error here or just leave alone???
            return
        }
-
-       fmt.println("Response sent successfully")
    }
-
-   fmt.println("Connection handler stopping due to server shutdown")
 }
 
 //Looks over all the possible ports that OstrichDB uses. If the first is free, use it, if not use the next available port.
@@ -577,5 +560,8 @@ HANDLE_SERVER_KILL_SWITCH :: proc() {
 
 //TODO: rename and move this somewhere like common.odin or misc.odin
  give_description ::proc(method:string, constant:string) -> string{
-   return clone(tprintf("Added %s dynamic %s route to router", method, constant),)
+     using fmt
+     using strings
+
+     return clone(tprintf("Added %s dynamic %s route to router", method, constant),)
 }
