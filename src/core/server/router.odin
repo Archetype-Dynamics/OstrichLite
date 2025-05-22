@@ -38,30 +38,13 @@ add_route_to_router :: proc(router: ^lib.Router,method: lib.HttpMethod, path: st
 
 //This finds the route that matches the path and calls appropriate handler
 @(require_results)
-handle_http_request :: proc(router: ^lib.Router,method: string,path: string,headers: map[string]string,) -> (status: ^lib.HttpStatus, response: string,) {
+handle_http_request :: proc(router: ^lib.Router,method: lib.HttpMethod, path:string, headers: map[string]string, args:[]string={""}) -> (status: ^lib.HttpStatus, response: string,) {
 	using lib
 
 	validMethod: HttpMethod
 
 	for route in router.routes {
-	    switch(method){
-	    case HttpMethodString[.HEAD]:
-	        validMethod = .HEAD
-		    break
-	    case HttpMethodString[.GET]:
-	        validMethod = .GET
-		    break
-	    case HttpMethodString[.POST]:
-	        validMethod = .POST
-		    break
-	    case HttpMethodString[.PUT]:
-	        validMethod = .PUT
-		    break
-	    case HttpMethodString[.DELETE]:
-	        validMethod = .DELETE
-		    break
-		}
-
+	    validMethod = method
 		if route.method != validMethod {
 			return  make_new_http_status(.BAD_REQUEST, HttpStatusText[.BAD_REQUEST]), "400 Bad Request\n"
 		}
@@ -69,7 +52,7 @@ handle_http_request :: proc(router: ^lib.Router,method: string,path: string,head
 		// Use dynamic path matching
 		pathMatch := is_path_match(route.path, path)
 		if !pathMatch {
-			return route.handler(method, path, headers)//Todo: need to get the HttpMethod equivalent of 'method' and pass it here
+			return route.handler(method, path, headers,args)//Todo: need to get the HttpMethod equivalent of 'method' and pass it here
 		}
 	}
 
