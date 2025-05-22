@@ -13,9 +13,31 @@ File Description:
             collections within the OstrichLite engine.
 *********************************************************/
 //GENERAL TYPES START
+
+StandardUserCredential :: struct {
+	Value:  string, //username
+	Length: int, //length of the username
+}
+
+SpecialUserCredential :: struct {
+	valAsBytes: []u8,
+	valAsStr:   string,
+}
+
+User :: struct {
+	user_id:        i64,
+	role:           StandardUserCredential,
+	username:       StandardUserCredential,
+	password:       StandardUserCredential,
+	salt:           SpecialUserCredential,
+	hashedPassword: SpecialUserCredential, //this is the hashed password without the salt
+	store_method:   int,
+	m_k:            SpecialUserCredential, //master key
+}
+
 OstrichLiteEngine:: struct{
     EngineRuntime: time.Duration,
-    Server: OstrichLiteServer
+    Server: Server
     //more??
 }
 //GENERAL TYPES END
@@ -137,7 +159,7 @@ MetadataField :: enum {
 
 
 //SERVER RELATED START
-OstrichLiteServer :: struct {
+Server :: struct {
     port: int,
     //more??
 }
@@ -169,10 +191,10 @@ HttpMethodString := [HttpMethod]string{
     .POST    = "POST",
     .PUT    = "PUT",
     .DELETE    = "DELETE",
-
 }
 
-RouteHandler ::proc(method,path:string, headers:map[string]string, params: ..string) -> (HttpStatus, string)
+// RouteHandler ::proc(method,path:string, headers:map[string]string, params: ..string) -> (^HttpStatus, string) //old but dont delete
+RouteHandler ::proc(method: HttpMethod,path:string, headers:map[string]string) -> (^HttpStatus, string)
 
 Route :: struct {
     method: HttpMethod,
@@ -192,6 +214,15 @@ HttpStatusText :: #sparse[HttpStatusCode]string {
 	.SERVER_ERROR = "Internal Server Error",
 }
 
+ServerSession :: struct {
+    Id:                 i64,
+    user:                     User,
+    start_timestamp:     time.Time,
+    end_timestamp:      time.Time,
+    total_runtime:          time.Duration
+}
+
+
 ServerEvent :: struct {
 	name:           string,
 	description:    string,
@@ -201,7 +232,6 @@ ServerEvent :: struct {
 	route:          Route,
 	statusCode:     HttpStatusCode,
 }
-
 
 ServerEventType :: enum {
 	ROUTINE = 0,
