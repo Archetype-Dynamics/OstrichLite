@@ -214,8 +214,9 @@ HttpMethodString := [HttpMethod]string{
     .DELETE    = "DELETE",
 }
 
-// RouteHandler ::proc(method,path:string, headers:map[string]string, params: ..string) -> (^HttpStatus, string) //old but dont delete
-RouteHandler ::proc(method: HttpMethod,path:string, headers:map[string]string) -> (^HttpStatus, string)
+//All request handler procecures which are located in in handlers.odin need to foolow this signature.
+//Note: 'args'  are only passed when makeing a POST or GET request
+RouteHandler ::proc(method: HttpMethod,path:string, headers:map[string]string, args:[]string) -> (^HttpStatus, string)
 
 Route :: struct {
     method: HttpMethod,
