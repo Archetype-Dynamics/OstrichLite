@@ -1,5 +1,6 @@
 package engine
-import lib "../../lib"
+import lib "../../library"
+import "../server"
 
 /********************************************************
 Author: Marshall A Burns
@@ -17,9 +18,9 @@ start_engine ::proc() -> int {
 
     for {
         ostrichLiteEngine := new(OstrichLiteEngine)
-        ostrichLiteEngine.server.port = 8042
+        ostrichLiteEngine.Server.port = 8042
     }
 
-    free(ostrichLiteEngine)
+    // free(ostrichLiteEngine)
     return 0
 }
