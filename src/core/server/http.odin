@@ -1,39 +1,115 @@
 package server
+
 import lib "../../library"
 import "core:strings"
 import "core:fmt"
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
+File Description:
+            Contains logic for building and parsing HTTP
+						requests and responses.
+*********************************************************/
 
-parse_http_request :: proc(rawData:[]byte) -> (method: lib.HttpMethod, path: string, headers: map[string]string){
+@(require_results)
+make_new_http_status ::proc(code: lib.HttpStatusCode, text: string  ) ->^lib.HttpStatus {
     using lib
 
-    requestDataString:= string(rawData)
-    lines:= split(requestDataString, "\r\n")
+    httpStatus:= new(HttpStatus)
+    httpStatus.statusCode = code
+    httpStatus.text = text
+
+    return httpStatus
+}
+
+@(require_results)
+parse_http_request :: proc(rawData:[]byte) -> (method: lib.HttpMethod, path: string, headers: map[string]string){
+    using lib
+    using strings
+
+    lines:= split(string(rawData), "\r\n")
+    defer delete(lines)
 
     if len(lines) < 1 {
         return nil, "Http request empty", nil
     }
 
-    requestParts:= strings.fields(lines[0])
+    requestParts:= fields(lines[0])
+    defer delete(requestParts)
 
    	if len(requestParts) != 3 {
-		fmt.println("Error: Request line does not have exactly 3 parts")
 		return nil, "", nil
 	}
 
-	methodStringPart := strings.trim_space(requestParts[0])
-
+	methodStringPart := trim_space(requestParts[0])
+	defer delete(methodStringPart)
 
 	for httpMethod , index in HttpMethodString{
 	    if methodStringPart == httpMethod{
-		   method = index //Todo: not sure if this is right
-
-
+		   method = index
 			break
-
 	   }
 	}
-	path = strings.trim_space(requestParts[1])
 
+	path = trim_space(requestParts[1])
+	defer delete(path
 
+	)
+	//Create a map to store the headers
+	headers = make(map[string]string)
+	headerEnd := 1
+
+	//Iterate through the lines of the request
+	for i := 1; i < len(lines); i += 1 {
+		if lines[i] == "" { 	//if the line is empty, the headers are done and set the headerEnd to the current index
+			headerEnd = i
+			break
+		}
+
+		//split the line into key and value
+		headerParts := strings.split(lines[i], ": ")
+		defer delete(headerParts)
+
+		//if theline has 2 parts, add it to the headers map
+		if len(headerParts) == 2 {
+			headers[headerParts[0]] = headerParts[1]
+		}
+
+	}
+
+	return method, path, headers
+}
+
+//builds an HTTP response with the passed in status code, headers, and body then returns the response
+@(require_results)
+build_http_response :: proc(status: ^lib.HttpStatus, headers: map[string]string, body: string) -> []byte {
+    using lib
+    using fmt
+    using strings
+
+	version := tprintf("Server: %s\r\n", string(get_ost_version()))
+	response := tprintf("HTTP/1.1 %d %s\r\n", int(status.statusCode), status.text)
+	defer delete(response)
+
+	// Add default headers
+	response = concatenate([]string{response, version})
+	response = concatenate([]string{response, tprintf("Content-Length: %d\r\n", len(body))})
+	response = concatenate([]string{response, "Connection: close\r\n"})
+
+	// Add custom headers
+	for key, value in headers {
+		response = concatenate([]string{response, tprintf("%s: %s\r\n", key, value)})
+	}
+
+	response = concatenate([]string{response, "\r\n"})
+
+	//if theres a body, add it to the response
+	if len(body) > 0 {
+		response = concatenate([]string{response, body})
+	}
+
+	return transmute([]byte)response
 }
