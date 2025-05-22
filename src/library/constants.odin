@@ -1,5 +1,6 @@
 package library
 
+import "core:time"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -130,3 +131,7 @@ CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
 
 
 MAX_COLLECTION_NAME_LENGTH :: 64
+MAX_SESSION_TIME: time.Duration : 86400000000000
+
+
+ServerPorts:[]int:{8042,8044,8046,8048,8050}
