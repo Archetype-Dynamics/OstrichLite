@@ -58,10 +58,20 @@ start_ostrich_server :: proc(server: ^lib.Server) -> int {
 		"",
 		nil,
 	)
+	free(initializedServerStartEvent)
 	// print_server_event_information(initializedServerStartEvent)
 
-
-
+	add_route_to_router(router, .OPTIONS, "/*", handle_options_request)
+	optionsRouteEvent := make_new_server_event(
+		"Add Route",
+		"Added '/options' static OPTIONS route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	free(optionsRouteEvent)
 
 
 	//OstrichDB GET version static route and server logging
@@ -419,13 +429,6 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 		// Parse incoming request
 		mthd, path, headers := parse_http_request(buf[:bytesRead])
 
-		// Create response headers
-		responseHeaders := make(map[string]string)
-		responseHeaders["Content-Type"] = "text/plain"
-		responseHeaders["Servesr"] = "OstrichDB"
-       defer delete(responseHeaders)
-
-
 
        // Handle the request using router
        httpStatus, responseBody := handle_http_request(router, mthd, path, headers)
@@ -446,6 +449,14 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
        // Build and send response
+		responseHeaders := make(map[string]string)
+		responseHeaders["Content-Type"] = "text/plain"
+		responseHeaders["Server"] = "OstrichLite"
+		defer delete(responseHeaders)
+
+		// Apply CORS headers to the response
+		apply_cors_headers(&responseHeaders, headers, mthd)
+
        response := build_http_response(httpStatus, responseHeaders, responseBody)
        attemptToBuildResponseEvent := make_new_server_event(
            "Build Response",

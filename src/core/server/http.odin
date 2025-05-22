@@ -55,9 +55,7 @@ parse_http_request :: proc(rawData:[]byte) -> (method: lib.HttpMethod, path: str
 	}
 
 	path = trim_space(requestParts[1])
-	defer delete(path
-
-	)
+	defer delete(path)
 	//Create a map to store the headers
 	headers = make(map[string]string)
 	headerEnd := 1

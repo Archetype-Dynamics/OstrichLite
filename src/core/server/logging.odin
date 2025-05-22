@@ -37,7 +37,7 @@ create_server_log_file :: proc() -> bool {
 //n - name
 //d - description
 //ty - type
-//tt - time
+//ti - time
 //isReq - isRequestEvent
 //p - path
 //m - method
@@ -98,7 +98,6 @@ log_server_event :: proc(event: ^lib.ServerEvent) -> bool {
 	concatLogMsg: string
 	someVar:string //Why did I name this variable like this LMAOO - Marshall
 	defer delete(concatLogMsg)
-	defer delete(someVar)
 
 
 	if event.isRequestEvent == true {
@@ -118,6 +117,9 @@ log_server_event :: proc(event: ^lib.ServerEvent) -> bool {
 		case .PUT:
             someVar = "PUT"
             break
+    	case .OPTIONS:
+			someVar = "OPTIONS"
+			break
 	}
 
 	routePath:= tprintf("Server Event Route Path: '%s'\n", event.route.path,)
