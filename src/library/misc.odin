@@ -41,7 +41,7 @@ UNDERLINE :: "\033[4m"
 BOLD_UNDERLINE :: "\033[4m\033[1m"
 RESET :: "\033[0m"
 
-
+//TODO: add a bool return to ensure the version is loaded???
 get_ost_version :: proc() -> []u8 {
 	data := #load("../../version")
 	return data
