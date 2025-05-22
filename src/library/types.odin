@@ -216,7 +216,7 @@ HttpMethodString := [HttpMethod]string{
     .OPTIONS = "OPTIONS",
 }
 
-//All request handler procecures which are located in in handlers.odin need to foolow this signature.
+//All request handler procecures which are located in in handlers.odin need to follow this signature.
 //Note: 'args'  are only passed when makeing a POST or GET request
 RouteHandler ::proc(method: HttpMethod,path:string, headers:map[string]string, args:[]string) -> (^HttpStatus, string)
 
