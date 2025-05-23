@@ -230,7 +230,7 @@ Router :: struct {
     routes: [dynamic]Route
 }
 
-//Cant find docs on #sparse.  No idea what it is but if it isn't here this wont work
+//Cant find docs on #sparse. Just used the compilers error message if you removed it
 HttpStatusText :: #sparse[HttpStatusCode]string {
     //2xx codes
     .OK                  = "OK",
@@ -290,3 +290,48 @@ ServerEventType :: enum {
 //Type alias for source code location info
 SourceCodeLocation::runtime.Source_Code_Location
 #assert(SourceCodeLocation == runtime.Source_Code_Location)
+
+QueryTokens :: enum{
+    INVALID = 0,
+    //Command tokens
+    NEW,
+    ERASE,
+    FETCH,
+    RENAME,
+    SET,
+    PURGE,
+    //parameter tokens
+    TO,
+    OF_TYPE,
+    WITH,
+    //Create and add more???
+}
+
+TokenStrings :: #partial[QueryTokens]string{
+    //command token strings
+    .NEW = "NEW",
+    .ERASE = "ERASE",
+    .FETCH = "FETCH",
+    .RENAME = "RENAME",
+    .SET = "SET",
+    .PURGE = "PURGE",
+    //parameter token strings
+    .TO = "TO",
+    .OF_TYPE = "OF_TYPE",
+    .WITH = "WITH",
+
+}
+
+Query :: struct {
+    CommandToken : string,
+    LocationToken: [dynamic]string,
+    ParameterToken: map[string]string,
+    isChained: bool,
+    rawInput: string
+}
+
+QueryParserState :: enum {
+    ExpectingCommandToken = 0,
+    ExpectingParameterToken,
+    ExpectingValue
+}
