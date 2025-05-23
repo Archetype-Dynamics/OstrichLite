@@ -103,7 +103,7 @@ Error :: struct {
 	location:  runtime.Source_Code_Location
 }
 
-ErrorMessage := [ErrorType]string {
+ErrorMessage := #partial[ErrorType]string {
 	.NO_ERROR                          = "No error occurred",
 	//General File Errors
 	.CANNOT_CREATE_FILE                = "Failed to create file",
