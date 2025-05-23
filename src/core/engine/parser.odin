@@ -5,12 +5,13 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 
-make_new_query::proc(input:string) ->^lib.Query{
+@(require_results)
+make_new_query::proc(input:string) -> ^lib.Query{
     using lib
     using strings
 
     query:= new(Query)
-    query.CommandToken = ""
+    query.CommandToken = .INVALID
     query.LocationToken = make([dynamic]string, 0)
     query.ParameterToken = make(map[string]string)
     query.isChained = false
@@ -46,7 +47,7 @@ parse_query ::proc(query: ^lib.Query) -> (^lib.Query, bool){
     }
 
     // Convert first token to TokenType
-	query.CommandToken = convert_string_to_ostrichdb_token(tokens[0])
+	query.CommandToken = convert_input_string_to_token(tokens[0])
 	state := QueryParserState.ExpectingCommandToken //state machine exclusively used for parameter token shit
 	currentParameterToken := "" //stores the current modifier such as TO
 	collectingString := false
@@ -104,9 +105,9 @@ parse_query ::proc(query: ^lib.Query) -> (^lib.Query, bool){
 	if collectingString && stringValue != "" {
 		query.ParameterToken[currentParameterToken] = stringValue
 
-		// If the current parameter token is OF_TYPE and the c_token is NEW
+		// If the current parameter token is OF_TYPE and the CommandToken is NEW
 		// Check if the string value contains the WITH token to handle record values
-		if currentParameterToken == TokenStrings[.OF_TYPE] && query.CommandToken == TokenStrings[.NEW] {
+		if currentParameterToken == TokenStrings[.OF_TYPE] && query.CommandToken == .NEW {
 			// Split the string to check for WITH token
 			parts := split(stringValue, " ")
 			defer delete(parts)
@@ -131,7 +132,8 @@ parse_query ::proc(query: ^lib.Query) -> (^lib.Query, bool){
 	return query, success
 }
 
-
+//TODO: unsure if this proc should be passed a string or a ^lib.Query - Marshall
+@(require_results)
 parse_chained_command :: proc(input: string) -> ^lib.Query {
     using strings
 
@@ -147,7 +149,7 @@ parse_chained_command :: proc(input: string) -> ^lib.Query {
         defer delete(firstTokens)
 
         if len(firstTokens) > 0 {
-            query.CommandToken = convert_string_to_ostrichdb_token(firstTokens[0])
+            query.CommandToken = convert_input_string_to_token(firstTokens[0])
         }
     }
 
@@ -170,14 +172,15 @@ check_if_param_token_is_valid :: proc(token: string) -> bool {
 }
 
 //take the string representation of a token and returns the token itself
-convert_string_to_ostrichdb_token :: proc(str: string) -> types.TokenType {
+convert_input_string_to_token :: proc(strValue: string) -> lib.QueryToken {
 	using lib
 
-	upperStr := strings.to_upper(str)
-	for tokenStrRepresentation, index in Token {
-		if upperStr == tokenStrRepresentation { 	//if the passed in string and the token string representation are the same return the enum
+	strValueUpper := strings.to_upper(strValue)
+	for tokenAsString, index in QueryTokenString {
+		if strValueUpper == tokenAsString {
 			return index
 		}
 	}
-	return TokenType.INVALID
+	return .INVALID
 }
+
