@@ -291,7 +291,7 @@ ServerEventType :: enum {
 SourceCodeLocation::runtime.Source_Code_Location
 #assert(SourceCodeLocation == runtime.Source_Code_Location)
 
-QueryTokens :: enum{
+QueryToken :: enum{
     INVALID = 0,
     //Command tokens
     NEW,
@@ -307,7 +307,19 @@ QueryTokens :: enum{
     //Create and add more???
 }
 
-TokenStrings :: #partial[QueryTokens]string{
+QueryTokenString :: #partial[QueryToken]string{
+    .NEW = "NEW",
+    .ERASE = "ERASE",
+    .RENAME = "RENAME",
+    .FETCH = "FETCH",
+    .SET = "SET",
+    .PURGE = "PURGE",
+    .TO = "TO",
+    .OF_TYPE = "OF_TYPE",
+    .WITH = "WITH",
+}
+
+TokenStrings :: #partial[QueryToken]string{
     //command token strings
     .NEW = "NEW",
     .ERASE = "ERASE",
@@ -323,7 +335,7 @@ TokenStrings :: #partial[QueryTokens]string{
 }
 
 Query :: struct {
-    CommandToken : string,
+    CommandToken : QueryToken,
     LocationToken: [dynamic]string,
     ParameterToken: map[string]string,
     isChained: bool,
