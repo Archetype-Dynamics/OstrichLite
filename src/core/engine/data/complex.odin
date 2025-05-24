@@ -19,12 +19,14 @@ File Description:
 
 
 //split the passed in "array" which is actually a string from whatever input system is in place(e.g the in the OstrichDB CLI the usesr input would be passed)
+@(require_results)
 parse_array :: proc(arrayAsString:string) -> []string {
     result := strings.split(arrayAsString, ",")
 	return result
 }
 
 //verifies that the members of the passed in array are valid based on the type of array they are in
+@(require_results)
 verify_array_values :: proc(record: ^lib.Record) -> bool {
 	using lib
 	using strconv
@@ -87,6 +89,7 @@ verify_array_values :: proc(record: ^lib.Record) -> bool {
 
 //validates the passed in date and returns it
 //remember to delete return value in from calling procedure
+@(require_results)
 parse_date :: proc(date: string) -> (string, bool) {
     using lib
     using fmt
@@ -151,6 +154,7 @@ parse_date :: proc(date: string) -> (string, bool) {
 
 //validates the passed in time and returns it
 //remember to delete return value in from calling procedure
+@(require_results)
 parse_time :: proc(time: string) -> (string, bool) {
     using lib
     using fmt
@@ -200,6 +204,7 @@ parse_time :: proc(time: string) -> (string, bool) {
 //validates the passed in datetime and returns it
 //Example datetime: 2024-03-14T09:30:00
 //remember to delete return value in from calling procedure
+@(require_results)
 parse_datetime :: proc(dateTime: string) -> (string, bool) {
     using lib
     using fmt
@@ -236,6 +241,7 @@ parse_datetime :: proc(dateTime: string) -> (string, bool) {
 //Must be in the format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 //Only allows 0-9 and a-f
 //remember to delete return value in from calling procedure
+@(require_results)
 parse_uuid :: proc(uuid: string) -> (string, bool) {
     using lib
     using fmt

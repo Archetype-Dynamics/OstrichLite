@@ -596,6 +596,7 @@ get_all_cluster_names_in_collection :: proc(collection: ^lib.Collection) -> ([dy
         if contains(line, clusterNameLine) {
             name := trim_space(split(line, ":")[2])
             append(&clusterNames, name)
+            delete(name)
         }
     }
     return clusterNames

@@ -962,7 +962,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 	//Single value primitives and complex
 	case RecordDataTypesStrings[.INTEGER]:
 		record.type = .INTEGER
-		valueAny, ok = convert_record_to_int(record.value)
+		valueAny, ok = convert_record_value_to_int(record.value)
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.FLOAT]:
@@ -972,7 +972,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.BOOLEAN]:
 		record.type = .BOOLEAN
-		valueAny, ok = convert_record_to_bool(record.value)
+		valueAny, ok = convert_record_value_to_bool(record.value)
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.STRING]:
@@ -991,7 +991,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.DATE]:
 		record.type = .DATE
-		date, ok := convert_record_to_date(record.value)
+		date, ok := convert_record_value_to_date(record.value)
 		if ok {
 			valueAny = date
 			setValueOk = ok
@@ -999,7 +999,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.TIME]:
 		record.type = .TIME
-		time, ok := convert_record_to_time(record.value)
+		time, ok := convert_record_value_to_time(record.value)
 		if ok {
 			valueAny = time
 			setValueOk = ok
@@ -1007,7 +1007,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.DATETIME]:
 		record.type = .DATETIME
-		dateTime, ok := convert_record_to_datetime(record.value)
+		dateTime, ok := convert_record_value_to_datetime(record.value)
 		if ok {
 			valueAny = dateTime
 			setValueOk = ok
@@ -1015,7 +1015,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		break
 	case RecordDataTypesStrings[.UUID]:
 		record.type = .UUID
-		uuid, ok := convert_record_to_uuid(record.value)
+		uuid, ok := convert_record_value_to_uuid(record.value)
 		if ok {
 			valueAny = uuid
 			setValueOk = ok
@@ -1034,7 +1034,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		if !verifiedValue {
 			return false
 		}
-		intArrayValue, ok := convert_record_to_int_array(record.value)
+		intArrayValue, ok := convert_record_value_to_int_array(record.value)
 		valueAny = intArrayValue
 		setValueOk = ok
 		break
@@ -1044,7 +1044,7 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		if !verifiedValue {
 			return false
 		}
-		fltArrayValue, ok := convert_record_to_float_array(record.value)
+		fltArrayValue, ok := convert_record_value_to_float_array(record.value)
 		valueAny = fltArrayValue
 		setValueOk = ok
 		break
@@ -1054,43 +1054,43 @@ set_record_value ::proc(collection: ^lib.Collection, cluster: ^lib.Cluster, reco
 		if !verifiedValue {
 			return false
 		}
-		boolArrayValue, ok := convert_record_to_bool_array(record.value)
+		boolArrayValue, ok := convert_record_value_to_bool_array(record.value)
 		valueAny = boolArrayValue
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.STRING_ARRAY]:
 		record.type = .STRING_ARRAY
-		stringArrayValue, ok := convert_record_to_string_array(record.value)
+		stringArrayValue, ok := convert_record_value_to_string_array(record.value)
 		valueAny = stringArrayValue
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.CHAR_ARRAY]:
 		record.type = .CHAR_ARRAY
-		charArrayValue, ok := convert_record_to_char_array(record.value)
+		charArrayValue, ok := convert_record_value_to_char_array(record.value)
 		valueAny = charArrayValue
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.DATE_ARRAY]:
 		record.type = .DATE_ARRAY
-		dateArrayValue, ok := convert_record_to_date_array(record.value)
+		dateArrayValue, ok := convert_record_value_to_date_array(record.value)
 		valueAny = dateArrayValue
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.TIME_ARRAY]:
 		record.type = .TIME_ARRAY
-		timeArrayValue, ok := convert_record_to_time_array(record.value)
+		timeArrayValue, ok := convert_record_value_to_time_array(record.value)
 		valueAny = timeArrayValue
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.DATETIME_ARRAY]:
 		record.type = .DATETIME_ARRAY
-		dateTimeArrayValue, ok := convert_record_to_datetime_array(record.value)
+		dateTimeArrayValue, ok := convert_record_value_to_datetime_array(record.value)
 		valueAny = dateTimeArrayValue
 		setValueOk = ok
 		break
 	case RecordDataTypesStrings[.UUID_ARRAY]:
 		record.type = .UUID_ARRAY
-		uuidArrayValue, ok := convert_record_to_uuid_array(record.value)
+		uuidArrayValue, ok := convert_record_value_to_uuid_array(record.value)
 		valueAny = uuidArrayValue
 		setValueOk = ok
 		break
