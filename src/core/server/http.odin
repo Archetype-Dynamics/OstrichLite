@@ -87,7 +87,7 @@ build_http_response :: proc(status: ^lib.HttpStatus, headers: map[string]string,
     using fmt
     using strings
 
-	version := tprintf("Server: %s\r\n", string(get_ost_version()))
+	version := tprintf("Server Version: %s\r\n", string(get_ost_version()))
 	response := tprintf("HTTP/1.1 %d %s\r\n", int(status.statusCode), status.text)
 
 	//Add default headers
