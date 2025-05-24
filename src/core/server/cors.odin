@@ -15,41 +15,34 @@ File Description:
             for the OstrichLite server.
 *********************************************************/
 
-// CorsOptions defines the configuration for CORS
-CorsOptions :: struct {
-    allowOrigins: []string,           // List of allowed origins, use ["*"] for all
-    allowMethods: []lib.HttpMethod,   // List of allowed HTTP methods
-    allowHeaders: []string,           // List of allowed headers
-    exposeHeaders: []string,          // List of headers exposed to the browser
-    allowCredentials: bool,           // Whether to allow credentials (cookies, etc.)
-    maxAge: int,                      // How long preflight requests can be cached (in seconds)
-}
 
 // Default CORS options that allow specific origins and common methods
-default_cors_options :: proc() -> CorsOptions {
+make_default_cors_options :: proc() -> ^lib.CorsOptions {
     using lib
+    using fmt
 
-    // Generate allowed origins based on ServerPorts
-    allowedOrigins := make([dynamic]string)
+    defaultCorsOptions := new(lib.CorsOptions)
 
-    // Add http and https protocols
-    append(&allowedOrigins, "http://*")
-    append(&allowedOrigins, "https://*")
+    allowedOrigins:= make([dynamic]string)
+    append(&allowedOrigins, "http://")
+    append(&allowedOrigins, "https://")
 
-    // Add origins from ServerPorts in constants.odin
     for port in ServerPorts {
         append(&allowedOrigins, fmt.tprintf("http://localhost:%d", port))
         append(&allowedOrigins, fmt.tprintf("https://localhost:%d", port))
     }
 
-    return CorsOptions{
-        allowOrigins = allowedOrigins[:],
-        allowMethods = []HttpMethod{.GET, .POST, .PUT, .DELETE, .HEAD, .OPTIONS},
-        allowHeaders = []string{"Content-Type", "Authorization"},
-        exposeHeaders = []string{},
-        allowCredentials = false,
-        maxAge = 86400, // 24 hours
-    }
+    defaultCorsOptions.allowOrigins = allowedOrigins[:]
+    defaultCorsOptions.allowMethods = []HttpMethod{.GET, .POST, .PUT, .DELETE, .HEAD, .OPTIONS}
+    defaultCorsOptions.allowHeaders = []string{"Content-Type", "Authorization"}
+    defaultCorsOptions.exposeHeaders = []string{}
+    defaultCorsOptions.allowCredentials = false
+    defaultCorsOptions.maxAge = 86400 // 24 hours
+
+    delete(allowedOrigins)
+
+    return defaultCorsOptions
+
 }
 
 
@@ -60,7 +53,8 @@ apply_cors_headers :: proc(headers: ^map[string]string, requestHeaders: map[stri
 
     defer free_all() //Tbh not sure id this is freeing the headers allocation or not...
 
-    corsOptions := default_cors_options()
+    corsOptions := make_default_cors_options()
+    defer free(corsOptions)
 
     // Get the Origin header from the request
     origin, hasOrigin := requestHeaders["Origin"]

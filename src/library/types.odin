@@ -284,8 +284,20 @@ ServerEventType :: enum {
 	ERROR,
 	CRITICAL_ERROR
 }
-
 //For error logging
+
+// CorsOptions defines the configuration for CORS
+CorsOptions :: struct {
+    allowOrigins: []string,           // List of allowed origins, use ["*"] for all
+    allowMethods: []HttpMethod,   // List of allowed HTTP methods
+    allowHeaders: []string,           // List of allowed headers
+    exposeHeaders: []string,          // List of headers exposed to the browser
+    allowCredentials: bool,           // Whether to allow credentials (cookies, etc.)
+    maxAge: int,                      // How long preflight requests can be cached (in seconds)
+}
+
+
+
 
 //Type alias for source code location info
 SourceCodeLocation::runtime.Source_Code_Location
