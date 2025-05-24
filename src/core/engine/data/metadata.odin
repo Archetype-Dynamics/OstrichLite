@@ -76,7 +76,8 @@ subtract_metadata_size_from_collection :: proc(collection: ^lib.Collection) -> (
 	totalSize := int(collectionInfo.size)
 
 	data, readSuccess := os.read_entire_file(collectionPath)
-	defer delete(data)
+	defer delete(data) //TODO: When running tests, the module says that this is a  "bad free"??? I dont know why
+
 	if !readSuccess {
 	    make_new_err(.CANNOT_READ_FILE, get_caller_location())
 		return -1, success
@@ -109,8 +110,10 @@ generate_checksum :: proc(collection: ^lib.Collection) -> string {
 
 
 	collectionPath:= concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
+
 	data, readSuccess := read_file(collectionPath, get_caller_location())
-	defer delete(data)
+	defer delete(data) //TODO: When running tests, the module says that this is a  "bad free"??? I dont know why
 	if !readSuccess {
 		make_new_err(.CANNOT_READ_FILE, get_caller_location())
 		return ""
@@ -141,12 +144,11 @@ generate_checksum :: proc(collection: ^lib.Collection) -> string {
 	joinedSplit := join(splitComma, "")
 	trimRBracket := trim(joinedSplit, "]")
 	trimLBRacket := trim(trimRBracket, "[")
-	checksumString, _ := strings.replace(trimLBRacket, " ", "", -1)
+	checksumString, _ := replace(trimLBRacket, " ", "", -1)
+	defer delete(checksumString)
 
 	delete(splitComma)
 	delete(joinedSplit)
-	delete(trimRBracket)
-	delete(trimLBRacket)
 
 
 	return clone(checksumString)
@@ -162,6 +164,8 @@ append_metadata_header_to_collection :: proc(collection: ^lib.Collection) -> boo
 	success:= false
 
 	collectionPath:= concat_standard_collection_name(collection.name)
+	defer delete(collectionPath) //TODO: When running tests, the module says that this is a  "bad free"??? I dont know why
+
 	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
 	if !readSuccess {
@@ -201,6 +205,8 @@ explicitly_assign_metadata_value :: proc(collection:^lib.Collection, field: lib.
 	success:= false
 
 	collectionPath:= concat_standard_collection_name(collection.name)
+	defer delete(collectionPath) //TODO: When running tests, the module says that this is a  "bad free"??? I dont know why
+
 	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
 	if !readSuccess {
@@ -213,6 +219,10 @@ explicitly_assign_metadata_value :: proc(collection:^lib.Collection, field: lib.
 
 	//not doing anything with h,m,s yet but its there if needed
 	currentDate, h, m, s := get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
+	defer delete(currentDate)
+	defer delete(h)
+	defer delete(m)
+	defer delete(s)
 	fileInfo := get_file_info(collectionPath)
 	fileSize := fileInfo.size
 
@@ -262,8 +272,10 @@ explicitly_assign_metadata_value :: proc(collection:^lib.Collection, field: lib.
 			}
 			break
 		case .CHECKSUM:
+		    checksum:=  generate_checksum(collection)
+			defer delete(checksum)
 			if has_prefix(line, "# Checksum:") {
-				lines[i] = tprintf("# Checksum: %s", generate_checksum(collection))
+				lines[i] = tprintf("# Checksum: %s",checksum)
 				found = true
 			}
 		}
@@ -301,6 +313,8 @@ get_metadata_field_value :: proc(collection:^lib.Collection, field: string,colTy
 	success:= false
 
 	collectionPath := concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
+
 	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
 	if !readSuccess{
@@ -363,6 +377,8 @@ update_metadata_value :: proc(collection:^lib.Collection, newValue: string,field
 	success:= false
 
 	collectionPath:= concat_standard_collection_name(collection.name)
+	defer delete(collectionPath) //TODO: When running tests, the module says that this is a  "bad free"??? I dont know why
+
 	data, readSuccess := read_file(collectionPath,get_caller_location())
 	defer delete(data)
 	if !readSuccess {

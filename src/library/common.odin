@@ -19,6 +19,7 @@ File Description:
 
 // Helper proc that reads an entire file and returns the content as bytes, if the fail thats fine, errors are handled in the caller proc
 read_file :: proc(filepath: string, callingProcedure: SourceCodeLocation) -> ([]byte, bool) {
+    //Do not delete(filePath) here because this helper proc is typically passed arg that is given by an allocator. e.g: concat_standard_collection_name
 	return os.read_entire_file(filepath)
 }
 
@@ -26,6 +27,7 @@ read_file :: proc(filepath: string, callingProcedure: SourceCodeLocation) -> ([]
 
 // Helper proc that writes data to a file and returns a success boolean, if the fail thats fine, errors are handled in the caller proc
 write_to_file :: proc(filepath: string, data: []byte, callingProcedure: SourceCodeLocation) -> bool {
+    defer delete(filepath)
 	return os.write_entire_file(filepath, data)
 }
 

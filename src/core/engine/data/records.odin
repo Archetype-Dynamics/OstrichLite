@@ -1331,6 +1331,7 @@ check_if_record_exists_in_cluster :: proc(collection:^lib.Collection, cluster:^l
 	success:= false
 
 	collectionPath := concat_standard_collection_name(collection.name)
+	defer delete(collectionPath)
 	data, readSuccess := read_file(collectionPath, get_caller_location())
 	defer delete(data)
 
